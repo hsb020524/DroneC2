@@ -1,0 +1,3 @@
+# Unity editor layout files are misdetected as Wolfram Language by GitHub Linguist
+*.wlt linguist-detectable=false
+*.wlt linguist-generated=true
