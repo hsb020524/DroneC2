@@ -15,14 +15,14 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 
 > 단계가 끝날 때마다 이 섹션을 갱신한다.
 
-- 현재 단계: 1단계 진행 중 — 작업 단위 1~4 완료, 5번(경로선)부터 진행
-- 완료: 요구사항 정의서·구조도 초안(v0.1), 스캐폴딩(인터페이스·asmdef), `LocalTangentPlaneConverter`+EditMode 테스트 7건 통과, 씬 환경(평면·드론 플레이스홀더), `FakeGpsSource`·`DroneView`·`UnitTelemetryBinder` 배선 후 Play 모드에서 웨이포인트 순환·방위 회전 확인
-- 다음: 작업 단위 5 `PathTrail`(경로선), 6 `FollowCamera`(추적 카메라), 7 마무리
+- 현재 단계: 1단계 진행 중 — 작업 단위 1~5 완료, 6번(추적 카메라)부터 진행
+- 완료: 요구사항 정의서·구조도 초안(v0.1), 스캐폴딩(인터페이스·asmdef), `LocalTangentPlaneConverter`+EditMode 테스트 7건 통과, 씬 환경(평면·드론 플레이스홀더), `FakeGpsSource`·`DroneView`·`UnitTelemetryBinder` 배선 후 Play 모드에서 웨이포인트 순환·방위 회전 확인, `PathTrail` 경로선(LineRenderer, 2m 간격·최대 2000점) 확인
+- 다음: 작업 단위 6 `FollowCamera`(추적 카메라), 7 마무리
 - 계획 문서: 1단계 작업 단위는 7개로 나눠 진행하며, 각 단위마다 씬 저장 후 커밋한다.
 
 | 단계 | 내용 | 상태 |
 |---|---|---|
-| 1 | 평면 위 가짜 GPS 드론 이동·경로 표시 | 진행 중 (4/7) |
+| 1 | 평면 위 가짜 GPS 드론 이동·경로 표시 | 진행 중 (5/7) |
 | 2 | Cesium 실제 지형 | 예정 |
 | 3 | 다중 유닛 + 관제 UI | 예정 |
 | 4 | 카메라 패널 | 예정 |
