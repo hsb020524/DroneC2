@@ -65,3 +65,7 @@ crashlytics-build.properties
 # OS
 .DS_Store
 Thumbs.db
+
+# Cesium ion access token (per developer, never commit)
+/[Aa]ssets/CesiumSettings/Resources/CesiumIonServers/ion.cesium.com.asset
+/[Aa]ssets/CesiumSettings/Resources/CesiumIonServers/ion.cesium.com.asset.meta
