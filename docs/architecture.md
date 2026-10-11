@@ -1,7 +1,7 @@
 # DroneC2 시스템 구조
 
-- 버전: v0.1 (초안)
-- 상태: 설계 단계 — 클래스명·버전은 예정 사항이며 구현 중 변경될 수 있다.
+- 버전: v0.2 (초안)
+- 상태: 1단계 구현 반영 — 2단계 이후 클래스명·버전은 예정 사항이며 구현 중 변경될 수 있다.
 
 ## 1. 설계 원칙
 
@@ -9,7 +9,7 @@
 
 - 의존 방향은 데이터 소스 → 좌표 변환 → 표시의 **단방향**이다.
 - 표시 계층은 데이터가 가짜 GPS인지 MAVLink인지 알지 못한다.
-- 데이터 소스는 공통 인터페이스(예정: `ITelemetrySource`)로 교체할 수 있다.
+- 데이터 소스는 공통 인터페이스 `ITelemetrySource`로, 좌표 변환은 `ICoordinateConverter`로 교체할 수 있다.
 
 ## 2. 계층 구조
 
@@ -74,7 +74,7 @@ sequenceDiagram
 
 | 단계 | 데이터 소스 | 좌표 변환 | 표시 |
 |---|---|---|---|
-| 1 | 가짜 GPS + 시나리오 JSON | 평면 로컬 변환 | 평면 위 드론, 경로선 |
+| 1 (완료) | 가짜 GPS (웨이포인트는 인스펙터 입력, 시나리오 JSON은 미구현) | 평면 로컬 변환 | 평면 위 드론, 경로선, 추적 카메라 |
 | 2 | 동일 | Cesium 지오레퍼런스 | 실제 지형 위 유닛 |
 | 3 | 다중 유닛 가짜 GPS | 동일 | 다중 유닛 + 관제 UI |
 | 4 | 동일 | 동일 | + 카메라 패널 |
@@ -90,7 +90,20 @@ sequenceDiagram
 
 > 주의: 5단계 MAVLink 수신은 별도 스레드에서 이뤄질 수 있으므로, 데이터 소스에서 표시 계층으로 넘길 때 메인 스레드 전달(큐 등)이 필요하다. (구현은 5단계)
 
-## 6. 범위와 보안
+## 6. 1단계 구현 현황
+
+런타임 코드는 `Assets/Scripts/<역할>/`, 테스트는 `Assets/Tests/EditMode/`에 있다. 어셈블리는 `DroneC2.Runtime`.
+
+| 계층 | 구성 요소 | 역할 |
+|---|---|---|
+| 데이터 소스 | `TelemetrySample`, `ITelemetrySource`, `FakeGpsSource` | 위경도 기준 샘플 구조체, 소스 인터페이스(이벤트 푸시), 웨이포인트 순환 가짜 GPS |
+| 좌표 변환 | `ICoordinateConverter`, `LocalTangentPlaneConverter` | 위경도·고도 → 월드 좌표(x=동, y=고도, z=북), 방위각 → 회전 |
+| 표시 | `DroneView`, `PathTrail`, `FollowCamera` | 보간 이동·회전, 경로선, 뒤·위 추적 카메라 (월드 좌표만 사용) |
+| 연결 | `UnitTelemetryBinder` | 소스 → 변환기 → 뷰를 잇는 유일한 지점 |
+
+2단계 이후에는 `ICoordinateConverter`(Cesium)와 `ITelemetrySource`(MAVLink) 구현체만 추가·교체하고 표시 계층은 수정하지 않는 것을 목표로 한다.
+
+## 7. 범위와 보안
 
 수신·표시 전용 구조이며 유닛에 명령을 보내는 경로는 없다. 모든 데이터는 가상·공개 데이터다.
 자세한 내용은 [requirements.md](requirements.md)의 5, 6절을 참고한다.
