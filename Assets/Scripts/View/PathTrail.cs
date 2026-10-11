@@ -13,7 +13,7 @@ namespace DroneC2.View
         [SerializeField] Material material;
         [SerializeField, Min(0.1f)] float minPointDistanceM = 2f;
         [SerializeField, Min(2)] int maxPoints = 2000;
-        [SerializeField, Min(0.01f)] float width = 1.5f;
+        [SerializeField, Min(0.01f)] float width = 2f;
 
         LineRenderer line;
         readonly List<Vector3> points = new List<Vector3>();

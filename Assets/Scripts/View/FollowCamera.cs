@@ -8,10 +8,10 @@ namespace DroneC2.View
     public class FollowCamera : MonoBehaviour
     {
         [SerializeField] Transform target;
-        [SerializeField] Vector3 offset = new Vector3(0f, 25f, -45f);
-        [SerializeField, Min(0.01f)] float positionSmoothTime = 0.25f;
+        [SerializeField] Vector3 offset = new Vector3(0f, 24f, -52f);
+        [SerializeField, Min(0.01f)] float positionSmoothTime = 0.15f;
         [SerializeField, Min(0.1f)] float yawSharpness = 2f;
-        [SerializeField] float lookHeightOffset = 0f;
+        [SerializeField] float lookHeightOffset = 4f;
 
         Vector3 velocity;
         float yaw;

@@ -383,10 +383,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DroneC2.Runtime::DroneC2.View.FollowCamera
   target: {fileID: 1031701904}
-  offset: {x: 0, y: 8, z: -18}
-  positionSmoothTime: 0.25
+  offset: {x: 0, y: 24, z: -52}
+  positionSmoothTime: 0.15
   yawSharpness: 2
-  lookHeightOffset: 2
+  lookHeightOffset: 4
 --- !u!1 &334155093
 GameObject:
   m_ObjectHideFlags: 0
@@ -735,7 +735,7 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: f7ae87e2eb121704aa7ac4373f5abc3d, type: 2}
   minPointDistanceM: 2
   maxPoints: 2000
-  width: 0.5
+  width: 2
 --- !u!120 &1064679216
 LineRenderer:
   serializedVersion: 3
@@ -890,7 +890,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2, y: 0.5, z: 2}
+  m_LocalScale: {x: 8, y: 2, z: 8}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1031701904}
@@ -1001,8 +1001,8 @@ Transform:
   m_GameObject: {fileID: 2002686042}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 1.5}
-  m_LocalScale: {x: 0.6, y: 0.4, z: 1.2}
+  m_LocalPosition: {x: 0, y: 0, z: 6}
+  m_LocalScale: {x: 2.4, y: 1.6, z: 4.8}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1031701904}
