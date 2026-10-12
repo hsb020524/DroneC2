@@ -17,10 +17,14 @@ namespace DroneC2.Core
         [SerializeField] AltitudeMode altitudeMode = AltitudeMode.Absolute;
         [Tooltip("비워 두면 레지스트리에 보고하지 않는다. (단일 유닛 씬)")]
         [SerializeField] UnitRegistry registry;
+        [Tooltip("비워 두면 마커를 갱신하지 않는다. 레지스트리가 있어야 상태가 반영된다.")]
+        [SerializeField] UnitMarker marker;
 
         ITelemetrySource source;
         ICoordinateConverter converter;
         AltitudeResolver altitudeResolver;
+        UnitStateStore subscribedStore;
+        string unitId;
 
         void OnValidate()
         {
@@ -52,12 +56,28 @@ namespace DroneC2.Core
             // 변환기가 지표 높이 조회를 지원하면 고도 모드에 사용한다. (지원하지 않으면 평면으로 간주)
             altitudeResolver = new AltitudeResolver(converterBehaviour as ITerrainHeightSampler);
             source.SampleReceived += OnSample;
+
+            if (registry != null && marker != null)
+            {
+                subscribedStore = registry.Store;
+                subscribedStore.UnitAdded += OnUnitState;
+                subscribedStore.StatusChanged += OnUnitState;
+                subscribedStore.SelectionChanged += OnSelectionChanged;
+            }
         }
 
         void OnDisable()
         {
             if (source != null)
                 source.SampleReceived -= OnSample;
+
+            if (subscribedStore != null)
+            {
+                subscribedStore.UnitAdded -= OnUnitState;
+                subscribedStore.StatusChanged -= OnUnitState;
+                subscribedStore.SelectionChanged -= OnSelectionChanged;
+                subscribedStore = null;
+            }
         }
 
         void OnSample(TelemetrySample sample)
@@ -71,8 +91,28 @@ namespace DroneC2.Core
             Quaternion rotation = converter.HeadingToRotation(sample.HeadingDeg);
             view.SetTarget(position, rotation);
 
-            if (registry != null)
-                registry.Store.Report(sample, position, Time.timeAsDouble);
+            if (registry == null)
+                return;
+
+            // 이벤트 핸들러가 자기 유닛만 걸러내도록 보고 전에 id를 확정한다.
+            if (unitId != sample.UnitId)
+            {
+                unitId = sample.UnitId;
+                registry.RegisterView(unitId, view.transform);
+            }
+
+            registry.Store.Report(sample, position, Time.timeAsDouble);
+        }
+
+        void OnUnitState(UnitState state)
+        {
+            if (state.Id == unitId)
+                marker.Apply(state.Kind, state.Status);
+        }
+
+        void OnSelectionChanged(string selectedId)
+        {
+            marker.SetSelected(unitId != null && selectedId == unitId);
         }
     }
 }

@@ -224,11 +224,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45b15eb55605132418c9d7b8cb8189c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DroneC2.Runtime::DroneC2.View.FollowCamera
-  target: {fileID: 1680943957}
+  target: {fileID: 0}
   offset: {x: 0, y: 24, z: -52}
   positionSmoothTime: 0.15
   yawSharpness: 2
+  rotationSharpness: 6
   lookHeightOffset: 4
+  overviewPosition: {x: 500, y: 1500, z: -1800}
+  overviewLookAt: {x: 500, y: -100, z: 200}
+  overviewSmoothTime: 0.8
 --- !u!1 &144880903
 GameObject:
   m_ObjectHideFlags: 0
@@ -1028,6 +1032,52 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ec4f9eabe99e98b47bb9b60185b78f52, type: 3}
+--- !u!1 &605123911
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 605123913}
+  - component: {fileID: 605123912}
+  m_Layer: 0
+  m_Name: CameraSelection
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &605123912
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 605123911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a4405750a323ff4e99bfecd01b01a1c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DroneC2.Runtime::DroneC2.Core.CameraSelectionBinder
+  registry: {fileID: 317126808}
+  followCamera: {fileID: 18500964}
+--- !u!4 &605123913
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 605123911}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &978613673
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1482,11 +1532,6 @@ MonoBehaviour:
   _updateInEditor: 1
   _logSelectionStats: 0
   _createPhysicsMeshes: 0
---- !u!4 &1680943957 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 5931301104100025291, guid: e8501a0f0aa303443a9c4b609cb5727e, type: 3}
-  m_PrefabInstance: {fileID: 4951216604649042791}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &4951216604649042791
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1565,3 +1610,4 @@ SceneRoots:
   - {fileID: 978613673}
   - {fileID: 582169956}
   - {fileID: 604057955}
+  - {fileID: 605123913}
