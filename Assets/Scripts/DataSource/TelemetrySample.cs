@@ -12,9 +12,12 @@ namespace DroneC2.DataSource
         public readonly double HeadingDeg;
         public readonly double SpeedMps;
         public readonly double Time;
+        public readonly UnitKind Kind;
+        public readonly UnitStatus Status;
 
         public TelemetrySample(string unitId, double latitude, double longitude, double altitudeM,
-            double headingDeg, double speedMps, double time)
+            double headingDeg, double speedMps, double time,
+            UnitKind kind = UnitKind.Drone, UnitStatus status = UnitStatus.Normal)
         {
             UnitId = unitId;
             Latitude = latitude;
@@ -23,6 +26,8 @@ namespace DroneC2.DataSource
             HeadingDeg = headingDeg;
             SpeedMps = speedMps;
             Time = time;
+            Kind = kind;
+            Status = status;
         }
     }
 }

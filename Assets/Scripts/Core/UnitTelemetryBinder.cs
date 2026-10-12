@@ -15,6 +15,8 @@ namespace DroneC2.Core
         [SerializeField] MonoBehaviour converterBehaviour;
         [SerializeField] DroneView view;
         [SerializeField] AltitudeMode altitudeMode = AltitudeMode.Absolute;
+        [Tooltip("비워 두면 레지스트리에 보고하지 않는다. (단일 유닛 씬)")]
+        [SerializeField] UnitRegistry registry;
 
         ITelemetrySource source;
         ICoordinateConverter converter;
@@ -68,6 +70,9 @@ namespace DroneC2.Core
             Vector3 position = converter.ToWorld(sample.Latitude, sample.Longitude, altitudeM);
             Quaternion rotation = converter.HeadingToRotation(sample.HeadingDeg);
             view.SetTarget(position, rotation);
+
+            if (registry != null)
+                registry.Store.Report(sample, position, Time.timeAsDouble);
         }
     }
 }
