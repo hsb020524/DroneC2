@@ -444,6 +444,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DroneC2.Runtime::DroneC2.Coordinate.CesiumGeoreferenceConverter
   georeference: {fileID: 144880905}
+  terrainTileset: {fileID: 0}
+  gridCellDeg: 0.0002
+  prefetchMargin: 2
 --- !u!114 &317126805
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -459,6 +462,7 @@ MonoBehaviour:
   sourceBehaviour: {fileID: 317126806}
   converterBehaviour: {fileID: 317126804}
   view: {fileID: 1680943958}
+  altitudeMode: 1
 --- !u!114 &317126806
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -472,7 +476,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DroneC2.Runtime::DroneC2.DataSource.FakeGpsSource
   unitId: UAV-01
-  altitudeM: 2300
+  altitudeM: 80
   speedMps: 25
   sampleRateHz: 10
   arrivalRadiusM: 5
