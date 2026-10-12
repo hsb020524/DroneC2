@@ -15,18 +15,23 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 
 > 단계가 끝날 때마다 이 섹션을 갱신한다.
 
-- 현재 단계: 1단계 완료 — 2단계(Cesium 실제 지형) 시작 전
-- 완료: 1단계 전체. 가짜 GPS(`FakeGpsSource`) → 평면 근사 변환(`LocalTangentPlaneConverter`) → 드론 이동·방위 회전(`DroneView`), 경로선(`PathTrail`), 추적 카메라(`FollowCamera`). EditMode 테스트 7건 통과, Play 모드 확인 완료. 드론 시각 요소는 표시용으로 4배 확대(루트 스케일 1 유지)
-- 다음: 2단계 — Cesium 실제 지형. `ICoordinateConverter` 구현체 추가. 미구현: FR-004 시나리오 JSON 로딩(웨이포인트는 인스펙터 입력)
-  - 시연 지역: 그레이트 스모키 산맥 국립공원(미국). 보안상 국내 지역(특히 접경 지역)은 의도적으로 제외했고, 한국 산악 지형과 고도(최고 약 2,000m)·숲 능선이 유사해 대체 지역으로 선정. 정확한 기준점 좌표는 2단계 계획에서 정한다.
-  - Cesium ion 토큰: DroneC2 전용 토큰, 권한 `assets:read`만, 접근 대상은 필요한 지형·이미지 에셋으로 제한. `Assets/CesiumSettings/Resources/CesiumIonServers/ion.cesium.com.asset`은 `.gitignore` 처리(커밋 금지). 토큰은 채팅에 붙여넣지 않고 사용자가 Unity Cesium 패널에서 직접 연결한다. README에는 본인 토큰을 넣어 실행하라는 안내를 쓴다.
-- 2단계 완료 후 README 작성: 프로젝트 소개, 단계별 스크린샷·GIF, 기술 스택, 설계 요약, 실행 방법, 개발 방식(Claude Code + MCP로 구현하고 설계 검토·코드 리뷰·검증은 직접 수행)
+- 현재 단계: 2단계 구현·검증 완료, 마무리 중(devlog·GIF·README·`stage-2` 태그) — 3단계 시작 전
+- 완료: 1단계 전체(평면 위 가짜 GPS 드론, 경로선, 추적 카메라)와 2단계 구현·검증.
+  - 2단계: `Stage2Cesium` 씬(Cesium World Terrain + Bing Maps Aerial)에서 `CesiumGeoreferenceConverter`(`ICoordinateConverter`)로 위경도를 월드 좌표로 변환한다. `ITerrainHeightSampler` + `TerrainHeightGrid`(격자 캐시·쌍선형 보간) + `AltitudeResolver`로 지표 기준 고도(`AltitudeMode`: Absolute/AboveGround/ClampToGround)를 지원한다. 드론은 `AboveGround` 80m로 경로를 이동하며 지표 위 높이가 77~81m로 유지됨을 실측했다.
+  - 기준점: 35.563°N, 83.499°W(클링맨스 돔 부근), 지오레퍼런스 높이 2000m(타원체고). 경로는 기준점 주변 약 1.2km 사각형(코너까지 약 850m), 속도 25m/s.
+  - View·DataSource 코드는 변환기 교체 때 수정하지 않았다. 이후 `PathTrail`이 첫 배치 전 위치를 기록하는 결함만 `DroneView.HasTarget`으로 수정했다.
+  - EditMode 테스트 35건 통과(좌표 변환 2종 7건씩, 격자 11건, 고도 해석 8건, `DroneView` 2건). Play 모드 확인 완료.
+- 다음: 3단계 — 다중 유닛 + 관제 UI(드론·전차, 전차는 `ClampToGround`). 미구현: FR-004 시나리오 JSON 로딩(웨이포인트는 인스펙터 입력)
+  - 시연 지역: 그레이트 스모키 산맥 국립공원(미국). 보안상 국내 지역(특히 접경 지역)은 의도적으로 제외했고, 한국 산악 지형과 고도(최고 약 2,000m)·숲 능선이 유사해 대체 지역으로 선정했다.
+  - Cesium ion 토큰: DroneC2 전용 토큰, 권한 `assets:read`만, 접근 대상은 필요한 지형·이미지 에셋으로 제한. `Assets/CesiumSettings/`는 통째로 `.gitignore` 처리(커밋 금지, `ion.cesium.com.asset`·`CesiumRuntimeSettings.asset`에 토큰 필드가 있음). 토큰은 채팅에 붙여넣지 않고 사용자가 Unity Cesium 패널에서 직접 연결한다. README에는 본인 토큰을 넣어 실행하라는 안내를 쓴다.
+  - 씬이 참조하는 `ionServer` GUID는 무시된 `.asset`에 묶여 있어 다른 환경에서는 참조가 비어 있을 수 있다. 새 환경에서는 Cesium 패널에서 토큰을 연결한 뒤 씬을 열어 확인한다.
+- 2단계 마무리 남은 작업: `docs/devlog.md` 2단계 정리(스크린샷·GIF), README 작성(프로젝트 소개, 단계별 스크린샷·GIF, 기술 스택, 설계 요약, 실행 방법, 개발 방식: Claude Code + MCP로 구현하고 설계 검토·코드 리뷰·검증은 직접 수행), `stage-2` 태그
 - 단계 작업은 작은 단위로 나눠 진행하며, 각 단위마다 씬 저장 후 커밋한다.
 
 | 단계 | 내용 | 상태 |
 |---|---|---|
 | 1 | 평면 위 가짜 GPS 드론 이동·경로 표시 | 완료 |
-| 2 | Cesium 실제 지형 | 예정 |
+| 2 | Cesium 실제 지형 | 마무리 중 |
 | 3 | 다중 유닛 + 관제 UI | 예정 |
 | 4 | 카메라 패널 | 예정 |
 | 5 | MAVLink 시뮬레이터 연동 | 예정 |
@@ -50,10 +55,11 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 ## Unity 규칙
 
 - Unity 조작(씬, 오브젝트, 컴포넌트, 에셋 등)은 MCP for Unity(UnityMCP 도구)로 한다. 스크립트 수정 후에는 `read_console`로 컴파일 오류를 확인한다.
+- `read_console`은 `error`·`warning`만 조회한다. Cesium 네이티브 라이브러리가 `info` 로그에 토큰이 포함된 URL을 그대로 출력하므로 전체(`all`/`info`) 조회를 하지 않는다.
 - 스크립트는 `Assets/Scripts/<역할>/` 아래에 역할별 폴더로 둔다. (예: `DataSource`, `Coordinate`, `View`, `UI`)
 - 환경: Unity `6000.6.5f1`, URP 17.6.0, Input System 1.20.0, Test Framework 1.8.0.
 - `*.csproj`, `*.slnx`와 `Library/`, `Temp/`, `Logs/`, `UserSettings/`는 Unity가 생성하므로 수정하지 않는다.
-- 빌드 스크립트는 없다. EditMode 테스트(`Assets/Tests/EditMode`, 7건)는 UnityMCP `run_tests` 또는 Unity batchmode로 실행한다.
+- 빌드 스크립트는 없다. EditMode 테스트(`Assets/Tests/EditMode`, 35건)는 UnityMCP `run_tests` 또는 Unity batchmode로 실행한다.
 - Player Settings의 Run In Background를 켜 두었다. 에디터가 비포커스여도 Play 모드가 진행된다.
 
 ```powershell
@@ -92,6 +98,7 @@ Play 모드의 Game 화면을 PNG 프레임으로 저장하고 GIF로 조립한�
 - 실제 군사 데이터와 실제 시설 좌표를 사용하지 않는다. 위치·경로·식별자는 가상 값 또는 공개 데이터만 쓴다.
 - 수신·표시 전용이며 유닛에 명령을 보내는 경로를 만들지 않는다.
 - Cesium ion 토큰 등 비밀 값은 채팅에 붙여넣거나 커밋하지 않는다. 연결은 사용자가 Unity에서 직접 한다.
+- 푸시 전에 올라갈 커밋에 토큰 형태 문자열(JWT `eyJ…`)과 `Assets/CesiumSettings` 경로가 없는지 검사한다. 토큰이 대화나 로그에 노출되면 재발급한다.
 - 자세한 내용은 `docs/requirements.md` 6절을 따른다.
 
 ## 기타
