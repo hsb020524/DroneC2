@@ -72,3 +72,5 @@ Thumbs.db
 # Cesium runtime settings also has a default ion access token field
 /[Aa]ssets/CesiumSettings/Resources/CesiumRuntimeSettings.asset
 /[Aa]ssets/CesiumSettings/Resources/CesiumRuntimeSettings.asset.meta
+# Cesium settings folder (token holders only; empty folder metas add noise)
+/[Aa]ssets/CesiumSettings*
