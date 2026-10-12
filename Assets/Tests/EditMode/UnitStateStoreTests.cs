@@ -43,6 +43,19 @@ namespace DroneC2.Tests
         }
 
         [Test]
+        public void Report_StoresAltitudeMode_DefaultsToAbsolute()
+        {
+            var store = new UnitStateStore();
+            store.Report(Sample("UAV-01"), Vector3.zero, 0.0);
+            store.Report(Sample("TNK-01", UnitKind.Tank), Vector3.zero, 0.0, AltitudeMode.ClampToGround);
+
+            store.TryGet("UAV-01", out UnitState drone);
+            store.TryGet("TNK-01", out UnitState tank);
+            Assert.AreEqual(AltitudeMode.Absolute, drone.AltitudeMode);
+            Assert.AreEqual(AltitudeMode.ClampToGround, tank.AltitudeMode);
+        }
+
+        [Test]
         public void Report_EmptyId_IsIgnored()
         {
             var store = new UnitStateStore();

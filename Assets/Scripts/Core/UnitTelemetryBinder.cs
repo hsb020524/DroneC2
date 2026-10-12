@@ -101,7 +101,7 @@ namespace DroneC2.Core
                 registry.RegisterView(unitId, view.transform);
             }
 
-            registry.Store.Report(sample, position, Time.timeAsDouble);
+            registry.Store.Report(sample, position, Time.timeAsDouble, altitudeMode);
         }
 
         void OnUnitState(UnitState state)

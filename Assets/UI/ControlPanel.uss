@@ -1,3 +1,4 @@
+/* 기준 해상도 1920x1080 (PanelSettings: ScaleWithScreenSize, 높이 기준)에서 읽기 좋은 크기 */
 .root {
     position: absolute;
     left: 0;
@@ -7,7 +8,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 16px;
+    padding: 24px;
 }
 
 .hidden {
@@ -15,24 +16,24 @@
 }
 
 .panel {
-    background-color: rgba(16, 20, 26, 0.82);
-    border-radius: 8px;
+    background-color: rgba(16, 20, 26, 0.86);
+    border-radius: 10px;
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.12);
-    padding: 12px;
-    color: rgb(230, 234, 240);
+    border-color: rgba(255, 255, 255, 0.14);
+    padding: 18px;
+    color: rgb(236, 240, 246);
 }
 
 .panel-title {
-    font-size: 18px;
+    font-size: 28px;
     -unity-font-style: bold;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
 }
 
 /* 목록 패널 */
 .list-panel {
-    width: 300px;
-    max-height: 70%;
+    width: 440px;
+    max-height: 75%;
 }
 
 .unit-list {
@@ -42,44 +43,44 @@
 .unit-row {
     flex-direction: row;
     align-items: center;
-    padding: 6px 8px;
-    margin-bottom: 4px;
-    border-radius: 6px;
-    background-color: rgba(255, 255, 255, 0.05);
-    border-left-width: 4px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.06);
+    border-left-width: 6px;
     border-left-color: rgba(0, 0, 0, 0);
 }
 
 .unit-row:hover {
-    background-color: rgba(255, 255, 255, 0.14);
+    background-color: rgba(255, 255, 255, 0.16);
 }
 
 .unit-row.selected {
-    background-color: rgba(70, 130, 220, 0.38);
+    background-color: rgba(70, 130, 220, 0.42);
     border-left-color: rgb(110, 170, 255);
 }
 
 .status-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 6px;
-    margin-right: 8px;
+    width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    margin-right: 12px;
 }
 
 .kind-badge {
-    width: 40px;
-    font-size: 12px;
-    color: rgb(170, 180, 195);
+    width: 64px;
+    font-size: 20px;
+    color: rgb(185, 195, 210);
 }
 
 .unit-id {
     flex-grow: 1;
-    font-size: 15px;
+    font-size: 24px;
     -unity-font-style: bold;
 }
 
 .unit-status {
-    font-size: 13px;
+    font-size: 22px;
 }
 
 .status-normal {
@@ -91,7 +92,7 @@
 }
 
 .status-lost {
-    color: rgb(230, 51, 51);
+    color: rgb(240, 70, 70);
 }
 
 .status-dot.status-normal {
@@ -103,31 +104,34 @@
 }
 
 .status-dot.status-lost {
-    background-color: rgb(230, 51, 51);
+    background-color: rgb(240, 70, 70);
 }
 
 .overview-button {
-    margin-top: 8px;
-    height: 30px;
+    margin-top: 12px;
+    height: 48px;
+    font-size: 22px;
 }
 
 /* 상세 패널 */
 .detail-panel {
-    width: 340px;
+    width: 560px;
 }
 
 .detail-row {
     flex-direction: row;
     justify-content: space-between;
-    padding: 3px 0;
+    padding: 6px 0;
 }
 
 .detail-key {
-    width: 60px;
-    color: rgb(150, 160, 175);
+    width: 230px;
+    font-size: 22px;
+    color: rgb(185, 195, 210);
 }
 
 .detail-value {
     flex-grow: 1;
+    font-size: 24px;
     -unity-text-align: middle-right;
 }

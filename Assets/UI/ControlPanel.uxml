@@ -29,7 +29,7 @@
                 <ui:Label name="detail-lon" class="detail-value" text="-" />
             </ui:VisualElement>
             <ui:VisualElement class="detail-row">
-                <ui:Label class="detail-key" text="고도" />
+                <ui:Label name="detail-alt-key" class="detail-key" text="고도" />
                 <ui:Label name="detail-alt" class="detail-value" text="-" />
             </ui:VisualElement>
             <ui:VisualElement class="detail-row">

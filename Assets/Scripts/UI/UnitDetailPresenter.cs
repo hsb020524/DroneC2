@@ -25,6 +25,7 @@ namespace DroneC2.UI
         Label link;
         Label latitude;
         Label longitude;
+        Label altitudeKey;
         Label altitude;
         Label speed;
         Label heading;
@@ -86,6 +87,7 @@ namespace DroneC2.UI
             link = root.Q<Label>("detail-link");
             latitude = root.Q<Label>("detail-lat");
             longitude = root.Q<Label>("detail-lon");
+            altitudeKey = root.Q<Label>("detail-alt-key");
             altitude = root.Q<Label>("detail-alt");
             speed = root.Q<Label>("detail-speed");
             heading = root.Q<Label>("detail-heading");
@@ -123,6 +125,7 @@ namespace DroneC2.UI
             link.text = UnitFormat.Link(state.Status, Time.timeAsDouble - state.LastReceivedTime);
             latitude.text = UnitFormat.Latitude(state.Latitude);
             longitude.text = UnitFormat.Longitude(state.Longitude);
+            altitudeKey.text = UnitFormat.AltitudeLabel(state.AltitudeMode);
             altitude.text = UnitFormat.Altitude(state.AltitudeM);
             speed.text = UnitFormat.Speed(state.SpeedMps);
             heading.text = UnitFormat.Heading(state.HeadingDeg);

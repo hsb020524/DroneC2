@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using DroneC2.Core;
 using DroneC2.DataSource;
 
 namespace DroneC2.UI
@@ -40,6 +41,20 @@ namespace DroneC2.UI
             int rounded = (int)Math.Round(normalized) % 360;
             int index = (int)Math.Round(rounded / 45.0) % 8;
             return string.Format(CultureInfo.InvariantCulture, "{0:000}° {1}", rounded, Cardinals[index]);
+        }
+
+        /// <summary>
+        /// 고도 모드에 맞는 고도 항목 이름. Absolute 값은 타원체고라 지오이드 기준 해발 고도와
+        /// 지역에 따라 수십 m 차이가 나므로 라벨에 기준을 밝힌다.
+        /// </summary>
+        public static string AltitudeLabel(AltitudeMode mode)
+        {
+            switch (mode)
+            {
+                case AltitudeMode.AboveGround: return "지표 위 고도";
+                case AltitudeMode.ClampToGround: return "지면";
+                default: return "해발 고도(타원체)";
+            }
         }
 
         public static string KindLabel(UnitKind kind)

@@ -20,6 +20,9 @@ namespace DroneC2.Core
         /// <summary>샘플이 보고한 고도(m). 의미는 유닛의 고도 모드를 따른다.</summary>
         public double AltitudeM { get; internal set; }
 
+        /// <summary>샘플 고도를 해석하는 방식. UI가 고도 값의 의미를 표시하는 데 쓴다.</summary>
+        public AltitudeMode AltitudeMode { get; internal set; }
+
         public double SpeedMps { get; internal set; }
         public double HeadingDeg { get; internal set; }
 
@@ -82,7 +85,8 @@ namespace DroneC2.Core
             return byId.TryGetValue(id, out state);
         }
 
-        public void Report(in TelemetrySample sample, Vector3 worldPosition, double now)
+        public void Report(in TelemetrySample sample, Vector3 worldPosition, double now,
+            AltitudeMode altitudeMode = AltitudeMode.Absolute)
         {
             if (string.IsNullOrEmpty(sample.UnitId))
                 return;
@@ -106,6 +110,7 @@ namespace DroneC2.Core
             state.Latitude = sample.Latitude;
             state.Longitude = sample.Longitude;
             state.AltitudeM = sample.AltitudeM;
+            state.AltitudeMode = altitudeMode;
             state.SpeedMps = sample.SpeedMps;
             state.HeadingDeg = sample.HeadingDeg;
             state.WorldPosition = worldPosition;
