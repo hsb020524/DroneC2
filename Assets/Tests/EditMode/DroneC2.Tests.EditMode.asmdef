@@ -4,7 +4,9 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "DroneC2.Runtime"
+        "DroneC2.Runtime",
+        "CesiumForUnity",
+        "Unity.Mathematics"
     ],
     "includePlatforms": [
         "Editor"

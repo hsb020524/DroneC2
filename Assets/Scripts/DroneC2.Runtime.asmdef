@@ -1,7 +1,10 @@
 {
     "name": "DroneC2.Runtime",
     "rootNamespace": "DroneC2",
-    "references": [],
+    "references": [
+        "CesiumForUnity",
+        "Unity.Mathematics"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
