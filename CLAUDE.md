@@ -25,6 +25,7 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
   - 시연 지역: 그레이트 스모키 산맥 국립공원(미국). 보안상 국내 지역(특히 접경 지역)은 의도적으로 제외했고, 한국 산악 지형과 고도(최고 약 2,000m)·숲 능선이 유사해 대체 지역으로 선정했다.
   - Cesium ion 토큰: DroneC2 전용 토큰, 권한 `assets:read`만, 접근 대상은 필요한 지형·이미지 에셋으로 제한. `Assets/CesiumSettings/`는 통째로 `.gitignore` 처리(커밋 금지, `ion.cesium.com.asset`·`CesiumRuntimeSettings.asset`에 토큰 필드가 있음). 토큰은 채팅에 붙여넣지 않고 사용자가 Unity Cesium 패널에서 직접 연결한다. README에는 본인 토큰을 넣어 실행하라는 안내를 쓴다.
   - 씬이 참조하는 `ionServer` GUID는 무시된 `.asset`에 묶여 있어 다른 환경에서는 참조가 비어 있을 수 있다. 새 환경에서는 Cesium 패널에서 토큰을 연결한 뒤 씬을 열어 확인한다.
+- 5단계 메모: `UnitStatus` enum 분리 재검토. 소스용(Normal/Warning)과 표시용(Normal/Warning/Lost)을 나눠 두절을 타입으로 강제할지, MAVLink 외부 데이터 수신 시 결정한다. (3단계에서는 `Lost`를 한 enum에 두고 소스는 보고하지 않는다는 규칙을 주석으로만 둠)
 - 2단계 문서: `docs/devlog.md` 2단계 정리(스크린샷 `docs/images/stage2-cesium-terrain.png`, GIF `stage2-cesium-terrain.gif`), `README.md` 작성 완료. 이후 단계가 끝날 때 README의 진행 상황·스크린샷을 갱신한다.
 - 단계 작업은 작은 단위로 나눠 진행하며, 각 단위마다 씬 저장 후 커밋한다.
 
