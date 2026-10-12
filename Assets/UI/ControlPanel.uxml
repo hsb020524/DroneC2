@@ -1,0 +1,45 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/ControlPanel.uss" />
+    <ui:VisualElement name="root" class="root" picking-mode="Ignore">
+        <ui:VisualElement name="list-panel" class="panel list-panel">
+            <ui:Label name="list-title" class="panel-title" text="유닛 목록" />
+            <ui:ScrollView name="unit-list" class="unit-list" />
+            <ui:Button name="overview-button" class="overview-button" text="전체 보기" />
+        </ui:VisualElement>
+        <ui:VisualElement name="detail-panel" class="panel detail-panel hidden">
+            <ui:Label name="detail-title" class="panel-title" text="-" />
+            <ui:VisualElement class="detail-row">
+                <ui:Label class="detail-key" text="종류" />
+                <ui:Label name="detail-kind" class="detail-value" text="-" />
+            </ui:VisualElement>
+            <ui:VisualElement class="detail-row">
+                <ui:Label class="detail-key" text="상태" />
+                <ui:Label name="detail-status" class="detail-value" text="-" />
+            </ui:VisualElement>
+            <ui:VisualElement class="detail-row">
+                <ui:Label class="detail-key" text="통신" />
+                <ui:Label name="detail-link" class="detail-value" text="-" />
+            </ui:VisualElement>
+            <ui:VisualElement class="detail-row">
+                <ui:Label class="detail-key" text="위도" />
+                <ui:Label name="detail-lat" class="detail-value" text="-" />
+            </ui:VisualElement>
+            <ui:VisualElement class="detail-row">
+                <ui:Label class="detail-key" text="경도" />
+                <ui:Label name="detail-lon" class="detail-value" text="-" />
+            </ui:VisualElement>
+            <ui:VisualElement class="detail-row">
+                <ui:Label class="detail-key" text="고도" />
+                <ui:Label name="detail-alt" class="detail-value" text="-" />
+            </ui:VisualElement>
+            <ui:VisualElement class="detail-row">
+                <ui:Label class="detail-key" text="속도" />
+                <ui:Label name="detail-speed" class="detail-value" text="-" />
+            </ui:VisualElement>
+            <ui:VisualElement class="detail-row">
+                <ui:Label class="detail-key" text="방위" />
+                <ui:Label name="detail-heading" class="detail-value" text="-" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
