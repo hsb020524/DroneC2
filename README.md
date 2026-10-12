@@ -26,7 +26,7 @@
 
 Cesium World Terrain 위에 위경도 기준으로 드론을 배치하고, 지형 높이를 조회해 지표 위 80m를 유지합니다. 변환기만 교체했고 표시·데이터 소스 코드는 수정하지 않았습니다.
 
-![2단계 결과](docs/images/stage2-cesium-terrain.png)
+![2단계 결과 GIF](docs/images/stage2-cesium-terrain.gif)
 
 단계별 구현·검증·겪은 문제는 [docs/devlog.md](docs/devlog.md)에 정리했습니다.
 
