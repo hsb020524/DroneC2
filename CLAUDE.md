@@ -15,7 +15,7 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 
 > 단계가 끝날 때마다 이 섹션을 갱신한다.
 
-- 현재 단계: 2단계 구현·검증 완료, 마무리 중(devlog·GIF·README·`stage-2` 태그) — 3단계 시작 전
+- 현재 단계: 2단계 완료(`stage-2` 태그) — 3단계(다중 유닛 + 관제 UI) 시작 전
 - 완료: 1단계 전체(평면 위 가짜 GPS 드론, 경로선, 추적 카메라)와 2단계 구현·검증.
   - 2단계: `Stage2Cesium` 씬(Cesium World Terrain + Bing Maps Aerial)에서 `CesiumGeoreferenceConverter`(`ICoordinateConverter`)로 위경도를 월드 좌표로 변환한다. `ITerrainHeightSampler` + `TerrainHeightGrid`(격자 캐시·쌍선형 보간) + `AltitudeResolver`로 지표 기준 고도(`AltitudeMode`: Absolute/AboveGround/ClampToGround)를 지원한다. 드론은 `AboveGround` 80m로 경로를 이동하며 지표 위 높이가 77~81m로 유지됨을 실측했다.
   - 기준점: 35.563°N, 83.499°W(클링맨스 돔 부근), 지오레퍼런스 높이 2000m(타원체고). 경로는 기준점 주변 약 1.2km 사각형(코너까지 약 850m), 속도 25m/s.
@@ -25,13 +25,13 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
   - 시연 지역: 그레이트 스모키 산맥 국립공원(미국). 보안상 국내 지역(특히 접경 지역)은 의도적으로 제외했고, 한국 산악 지형과 고도(최고 약 2,000m)·숲 능선이 유사해 대체 지역으로 선정했다.
   - Cesium ion 토큰: DroneC2 전용 토큰, 권한 `assets:read`만, 접근 대상은 필요한 지형·이미지 에셋으로 제한. `Assets/CesiumSettings/`는 통째로 `.gitignore` 처리(커밋 금지, `ion.cesium.com.asset`·`CesiumRuntimeSettings.asset`에 토큰 필드가 있음). 토큰은 채팅에 붙여넣지 않고 사용자가 Unity Cesium 패널에서 직접 연결한다. README에는 본인 토큰을 넣어 실행하라는 안내를 쓴다.
   - 씬이 참조하는 `ionServer` GUID는 무시된 `.asset`에 묶여 있어 다른 환경에서는 참조가 비어 있을 수 있다. 새 환경에서는 Cesium 패널에서 토큰을 연결한 뒤 씬을 열어 확인한다.
-- 2단계 마무리 남은 작업: `docs/devlog.md` 2단계 정리(스크린샷·GIF), README 작성(프로젝트 소개, 단계별 스크린샷·GIF, 기술 스택, 설계 요약, 실행 방법, 개발 방식: Claude Code + MCP로 구현하고 설계 검토·코드 리뷰·검증은 직접 수행), `stage-2` 태그
+- 2단계 문서: `docs/devlog.md` 2단계 정리(스크린샷 `docs/images/stage2-cesium-terrain.png`, GIF `stage2-cesium-terrain.gif`), `README.md` 작성 완료. 이후 단계가 끝날 때 README의 진행 상황·스크린샷을 갱신한다.
 - 단계 작업은 작은 단위로 나눠 진행하며, 각 단위마다 씬 저장 후 커밋한다.
 
 | 단계 | 내용 | 상태 |
 |---|---|---|
 | 1 | 평면 위 가짜 GPS 드론 이동·경로 표시 | 완료 |
-| 2 | Cesium 실제 지형 | 마무리 중 |
+| 2 | Cesium 실제 지형 | 완료 |
 | 3 | 다중 유닛 + 관제 UI | 예정 |
 | 4 | 카메라 패널 | 예정 |
 | 5 | MAVLink 시뮬레이터 연동 | 예정 |
