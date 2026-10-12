@@ -16,6 +16,7 @@ namespace DroneC2.View
         [SerializeField, Min(0.01f)] float width = 2f;
 
         LineRenderer line;
+        DroneView targetView;
         readonly List<Vector3> points = new List<Vector3>();
         Vector3[] buffer = new Vector3[0];
 
@@ -29,11 +30,18 @@ namespace DroneC2.View
             if (material != null)
                 line.sharedMaterial = material;
             line.positionCount = 0;
+
+            if (target != null)
+                targetView = target.GetComponent<DroneView>();
         }
 
         void LateUpdate()
         {
             if (target == null)
+                return;
+
+            // 첫 목표가 배치되기 전의 초기 위치를 경로에 넣으면 원점에서 출발하는 선이 생긴다.
+            if (targetView != null && !targetView.HasTarget)
                 return;
 
             Vector3 position = target.position;

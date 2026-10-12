@@ -15,6 +15,9 @@ namespace DroneC2.View
         Vector3 velocity;
         bool hasTarget;
 
+        /// <summary>첫 목표를 받아 배치가 끝났는지 여부. 배치 전의 Transform 위치는 의미가 없다.</summary>
+        public bool HasTarget => hasTarget;
+
         public void SetTarget(Vector3 position, Quaternion rotation)
         {
             targetPosition = position;
