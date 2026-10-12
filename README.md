@@ -2,9 +2,9 @@
 
 드론·전차의 GPS 위치와 작전 상황을 3D 지형 위에서 보여주는 관제 시스템 포트폴리오 프로젝트입니다. Unity로 만들며, 모든 데이터는 가상 값과 공개 지형 데이터입니다. 수신·표시 전용이며 유닛에 명령을 보내는 경로는 없습니다.
 
-![2단계: 그레이트 스모키 산맥 지형 위의 드론](docs/images/stage2-cesium-terrain.gif)
+![3단계: 관제 UI에서 유닛을 선택해 추적하는 화면](docs/images/stage3-control-ui.gif)
 
-*2단계 결과(18초). 드론이 코너에서 방향을 틀고 능선을 넘으며 지형을 따라 지표 위 80m를 유지합니다.*
+*3단계 결과(15초). 전체 보기에서 드론·전차를 차례로 선택해 추적하고, 경고 상태가 목록·상세 패널·마커에 함께 표시됩니다.*
 
 ## 진행 상황
 
@@ -12,7 +12,7 @@
 |---|---|---|
 | 1 | 평면 위 가짜 GPS 드론 이동·경로 표시 | 완료 |
 | 2 | Cesium 실제 지형 위 이동, 지표 기준 고도 | 완료 |
-| 3 | 다중 유닛 + 관제 UI | 예정 |
+| 3 | 다중 유닛(드론 3·전차 2) + 관제 UI | 완료 |
 | 4 | 카메라 패널 | 예정 |
 | 5 | MAVLink 시뮬레이터 연동 | 예정 |
 
@@ -28,6 +28,12 @@ Cesium World Terrain 위에 위경도 기준으로 드론을 배치하고, 지�
 
 ![2단계 결과 GIF](docs/images/stage2-cesium-terrain.gif)
 
+### 3단계 — 다중 유닛 + 관제 UI
+
+드론 3기·전차 2기를 같은 지형 위에서 움직이고, 목록에서 선택하면 카메라가 따라가며 위치·고도·속도·방위·통신 상태를 보여 줍니다. 종류는 마커 모양, 상태는 색(정상/경고/두절)으로 구분합니다. 두절은 데이터가 끊긴 것을 수신 측이 시간으로 판정합니다.
+
+![3단계 결과 GIF](docs/images/stage3-control-ui.gif)
+
 단계별 구현·검증·겪은 문제는 [docs/devlog.md](docs/devlog.md)에 정리했습니다.
 
 ## 기술 스택
@@ -36,7 +42,8 @@ Cesium World Terrain 위에 위경도 기준으로 드론을 배치하고, 지�
 |---|---|
 | 엔진 | Unity `6000.6.5f1`, URP 17.6.0, Input System 1.20.0 |
 | 지형 | Cesium for Unity 1.26.0, Cesium World Terrain, Bing Maps Aerial (Cesium ion) |
-| 테스트 | Unity Test Framework 1.8.0 (EditMode 35건) |
+| UI | UI Toolkit (런타임 UIDocument, UXML/USS) |
+| 테스트 | Unity Test Framework 1.8.0 (EditMode 65건) |
 | 개발 도구 | Claude Code, MCP for Unity |
 | 언어 | C# |
 
@@ -48,12 +55,16 @@ Cesium World Terrain 위에 위경도 기준으로 드론을 배치하고, 지�
 flowchart LR
     SRC["데이터 소스<br/>ITelemetrySource<br/>FakeGpsSource (MAVLink 예정)"] --> BIND["UnitTelemetryBinder<br/>(유일한 연결 지점)"]
     BIND --> CONV["좌표 변환<br/>ICoordinateConverter<br/>평면 근사 / Cesium 지오레퍼런스"]
-    CONV --> VIEW["표시<br/>DroneView, PathTrail, FollowCamera"]
+    CONV --> VIEW["표시<br/>DroneView, PathTrail, UnitMarker, FollowCamera"]
     CONV -. "ITerrainHeightSampler" .-> BIND
+    BIND --> REG["UnitRegistry<br/>(상태·선택)"]
+    REG --> UI["관제 UI<br/>목록·상세 패널"]
+    REG --> CAM["카메라 선택"]
 ```
 
 - 데이터 소스는 `ITelemetrySource`, 좌표 변환은 `ICoordinateConverter` 뒤에 둡니다.
 - 소스·변환기·뷰를 잇는 곳은 `UnitTelemetryBinder` 하나뿐입니다.
+- 관제 UI와 카메라 선택은 `UnitRegistry`(유닛 상태·선택·두절 판정)만 읽고 데이터 소스는 알지 못합니다.
 - 지표 기준 고도(`Absolute`/`AboveGround`/`ClampToGround`)는 바인더가 계산해 변환기에 넘깁니다.
 - 지형 높이는 격자 캐시와 쌍선형 보간을 거쳐 비동기 배치로 조회합니다. 캐시·보간·고도 계산은 엔진에 의존하지 않는 순수 로직이라 EditMode 테스트로 검증합니다.
 
@@ -89,9 +100,13 @@ flowchart LR
 - 화면의 Cesium·데이터 출처 크레딧은 이용 약관상 유지해야 합니다.
 - 토큰이 로그나 채팅 등에 노출되면 Cesium ion에서 폐기하고 재발급하세요. 에디터 콘솔의 `info` 로그에는 토큰이 포함된 URL이 출력될 수 있습니다.
 
-### 4. 테스트
+### 4. 3단계 씬 (Cesium ion 토큰 필요)
 
-Unity의 Test Runner(`Window > General > Test Runner`)에서 EditMode를 실행합니다. 35건이 모두 통과해야 합니다.
+2단계와 같은 방법으로 토큰을 연결한 뒤 `Assets/Scenes/Stage3Control.unity`를 열고 Play합니다. 왼쪽 목록에서 유닛을 클릭하면 카메라가 따라가고, `전체 보기` 버튼이나 Esc로 선택을 해제합니다. 유닛 중 일부는 시연용으로 일정 시각에 경고 또는 통신 두절 상태가 됩니다.
+
+### 5. 테스트
+
+Unity의 Test Runner(`Window > General > Test Runner`)에서 EditMode를 실행합니다. 65건이 모두 통과해야 합니다.
 
 ## 개발 방식
 
@@ -102,6 +117,7 @@ Unity의 Test Runner(`Window > General > Test Runner`)에서 EditMode를 실행�
 - **기준점**: 계획 검토 때 1단계 기준점을 실제 시설과 무관한 중립 좌표(공해상)로 바꿨습니다.
 - **표시 설계**: 드론을 확대해 보여줄 때 루트 스케일을 키우지 않고 시각 요소(`Body`, `Nose`)만 키우도록 설계를 지정했습니다. 위치·회전 데이터와 표시를 분리하기 위해서입니다.
 - **도구화**: GIF 녹화를 일회성 작업이 아니라 이후 단계에서 재사용할 수 있는 도구로 남기도록 바꿨습니다.
+- **전차 경로**: 도로에 억지로 맞추지 않고, 전차는 야지 주행도 하므로 지형 경사 분석 결과(최대 경사 15° 수준)만 한계로 기록하기로 판단했습니다.
 - **시연 지역**: 보안상 접경 지역을 포함한 국내 지역을 제외하고, 지형이 유사한 해외 국립공원(그레이트 스모키 산맥)을 선정했습니다.
 - **비밀 값**: 로그로 노출된 Cesium ion 토큰은 즉시 재발급해 다시 연결했습니다.
 - **검증**: 단계마다 테스트와 diff로 결과를 확인했습니다.

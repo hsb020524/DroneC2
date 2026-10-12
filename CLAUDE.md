@@ -15,25 +15,28 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 
 > 단계가 끝날 때마다 이 섹션을 갱신한다.
 
-- 현재 단계: 2단계 완료(`stage-2` 태그) — 3단계(다중 유닛 + 관제 UI) 시작 전
+- 현재 단계: 3단계 완료(`stage-3` 태그) — 4단계(카메라 패널) 시작 전
 - 완료: 1단계 전체(평면 위 가짜 GPS 드론, 경로선, 추적 카메라)와 2단계 구현·검증.
   - 2단계: `Stage2Cesium` 씬(Cesium World Terrain + Bing Maps Aerial)에서 `CesiumGeoreferenceConverter`(`ICoordinateConverter`)로 위경도를 월드 좌표로 변환한다. `ITerrainHeightSampler` + `TerrainHeightGrid`(격자 캐시·쌍선형 보간) + `AltitudeResolver`로 지표 기준 고도(`AltitudeMode`: Absolute/AboveGround/ClampToGround)를 지원한다. 드론은 `AboveGround` 80m로 경로를 이동하며 지표 위 높이가 77~81m로 유지됨을 실측했다.
   - 기준점: 35.563°N, 83.499°W(클링맨스 돔 부근), 지오레퍼런스 높이 2000m(타원체고). 경로는 기준점 주변 약 1.2km 사각형(코너까지 약 850m), 속도 25m/s.
   - View·DataSource 코드는 변환기 교체 때 수정하지 않았다. 이후 `PathTrail`이 첫 배치 전 위치를 기록하는 결함만 `DroneView.HasTarget`으로 수정했다.
   - EditMode 테스트 35건 통과(좌표 변환 2종 7건씩, 격자 11건, 고도 해석 8건, `DroneView` 2건). Play 모드 확인 완료.
-- 다음: 3단계 — 다중 유닛 + 관제 UI(드론·전차, 전차는 `ClampToGround`). 미구현: FR-004 시나리오 JSON 로딩(웨이포인트는 인스펙터 입력)
+- 3단계: `Stage3Control` 씬에서 드론 3기(`AboveGround` 60/80/100m)·전차 2기(`ClampToGround`)를 동시에 표시한다. 구조: `UnitKind`/`UnitStatus`는 DataSource 계층, `UnitStateStore`(순수 로직)·`UnitRegistry`(MonoBehaviour)가 수신·두절 판정(2초)·선택을 담고, `UnitMarker`(마커)·`CameraSelectionBinder`(선택→카메라)·UI Toolkit 목록/상세 패널(`UnitListPresenter`, `UnitDetailPresenter`, `UnitFormat`)이 레지스트리만 읽는다. 유닛은 `Assets/Prefabs/Units/Drone.prefab`·`Tank.prefab`이며 변환기·레지스트리는 씬에 하나씩 두고 공유한다.
+  - EditMode 테스트 65건 통과. 10기 에디터 평균 643 FPS(빌드 측정 아님). UI는 1920×1080 기준 높이 맞춤 스케일링이다.
+  - 알려진 한계: TNK-01 경로가 도로에서 벗어나는 구간이 있다(야지 주행으로 보고 보정하지 않기로 결정). TNK-02 경로는 짧다(동쪽 연장은 경사 15° 초과). 높이 캐시 상한 없음. 3D 오브젝트 클릭 선택 없음. Esc 키 해제는 키 입력으로 검증하지 못했다.
+- 다음: 4단계 — 카메라 패널. 미구현: FR-004 시나리오 JSON 로딩(4단계로 이월, 웨이포인트는 인스펙터 입력)
   - 시연 지역: 그레이트 스모키 산맥 국립공원(미국). 보안상 국내 지역(특히 접경 지역)은 의도적으로 제외했고, 한국 산악 지형과 고도(최고 약 2,000m)·숲 능선이 유사해 대체 지역으로 선정했다.
   - Cesium ion 토큰: DroneC2 전용 토큰, 권한 `assets:read`만, 접근 대상은 필요한 지형·이미지 에셋으로 제한. `Assets/CesiumSettings/`는 통째로 `.gitignore` 처리(커밋 금지, `ion.cesium.com.asset`·`CesiumRuntimeSettings.asset`에 토큰 필드가 있음). 토큰은 채팅에 붙여넣지 않고 사용자가 Unity Cesium 패널에서 직접 연결한다. README에는 본인 토큰을 넣어 실행하라는 안내를 쓴다.
   - 씬이 참조하는 `ionServer` GUID는 무시된 `.asset`에 묶여 있어 다른 환경에서는 참조가 비어 있을 수 있다. 새 환경에서는 Cesium 패널에서 토큰을 연결한 뒤 씬을 열어 확인한다.
 - 5단계 메모: `UnitStatus` enum 분리 재검토. 소스용(Normal/Warning)과 표시용(Normal/Warning/Lost)을 나눠 두절을 타입으로 강제할지, MAVLink 외부 데이터 수신 시 결정한다. (3단계에서는 `Lost`를 한 enum에 두고 소스는 보고하지 않는다는 규칙을 주석으로만 둠)
-- 2단계 문서: `docs/devlog.md` 2단계 정리(스크린샷 `docs/images/stage2-cesium-terrain.png`, GIF `stage2-cesium-terrain.gif`), `README.md` 작성 완료. 이후 단계가 끝날 때 README의 진행 상황·스크린샷을 갱신한다.
+- 3단계 문서: `docs/devlog.md` 3단계 정리(스크린샷 `docs/images/stage3-control-ui.png`, GIF `stage3-control-ui.gif`), `README.md`·`docs/requirements.md`·`docs/architecture.md` 갱신 완료. 이후 단계가 끝날 때 README의 진행 상황·맨 위 GIF를 갱신한다.
 - 단계 작업은 작은 단위로 나눠 진행하며, 각 단위마다 씬 저장 후 커밋한다.
 
 | 단계 | 내용 | 상태 |
 |---|---|---|
 | 1 | 평면 위 가짜 GPS 드론 이동·경로 표시 | 완료 |
 | 2 | Cesium 실제 지형 | 완료 |
-| 3 | 다중 유닛 + 관제 UI | 예정 |
+| 3 | 다중 유닛 + 관제 UI | 완료 |
 | 4 | 카메라 패널 | 예정 |
 | 5 | MAVLink 시뮬레이터 연동 | 예정 |
 
@@ -61,7 +64,7 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 - 스크립트는 `Assets/Scripts/<역할>/` 아래에 역할별 폴더로 둔다. (예: `DataSource`, `Coordinate`, `View`, `UI`)
 - 환경: Unity `6000.6.5f1`, URP 17.6.0, Input System 1.20.0, Test Framework 1.8.0.
 - `*.csproj`, `*.slnx`와 `Library/`, `Temp/`, `Logs/`, `UserSettings/`는 Unity가 생성하므로 수정하지 않는다.
-- 빌드 스크립트는 없다. EditMode 테스트(`Assets/Tests/EditMode`, 35건)는 UnityMCP `run_tests` 또는 Unity batchmode로 실행한다.
+- 빌드 스크립트는 없다. EditMode 테스트(`Assets/Tests/EditMode`, 65건)는 UnityMCP `run_tests` 또는 Unity batchmode로 실행한다.
 - Player Settings의 Run In Background를 켜 두었다. 에디터가 비포커스여도 Play 모드가 진행된다.
 
 ```powershell
@@ -94,6 +97,8 @@ Play 모드의 Game 화면을 PNG 프레임으로 저장하고 GIF로 조립한�
 6. GIF 크기가 10MB 이하인지 확인하고 `docs/devlog.md`에 추가한다.
 
 주의: Play 모드에서 스크립트를 수정하면 도메인 리로드로 녹화가 끊긴다. 에디터 Run In Background는 이미 켜져 있다.
+
+UI가 들어가는 장면은 Game 뷰 해상도를 1920×1080으로 맞춘 뒤 녹화한다(작은 뷰에서는 UI 글자가 GIF에서 읽히지 않는다). 에디터 포커스가 없으면 Input System 입력이 Game 뷰에 전달되지 않으므로, 자동 검증은 UI 요소에 이벤트를 직접 보내는 방식으로 한다.
 
 ## 보안 원칙
 

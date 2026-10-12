@@ -1,7 +1,7 @@
 # DroneC2 시스템 구조
 
-- 버전: v0.3 (초안)
-- 상태: 2단계 구현 반영 — 3단계 이후 클래스명·버전은 예정 사항이며 구현 중 변경될 수 있다.
+- 버전: v0.4 (초안)
+- 상태: 3단계 구현 반영 — 4단계 이후 클래스명·버전은 예정 사항이며 구현 중 변경될 수 있다.
 
 ## 1. 설계 원칙
 
@@ -76,7 +76,7 @@ sequenceDiagram
 |---|---|---|---|
 | 1 (완료) | 가짜 GPS (웨이포인트는 인스펙터 입력, 시나리오 JSON은 미구현) | 평면 로컬 변환 | 평면 위 드론, 경로선, 추적 카메라 |
 | 2 (완료) | 동일 | Cesium 지오레퍼런스 + 지표 높이 조회 | 실제 지형 위 유닛 (표시 계층 변경 없음) |
-| 3 | 다중 유닛 가짜 GPS | 동일 | 다중 유닛 + 관제 UI |
+| 3 (완료) | 다중 유닛 가짜 GPS(드론 3·전차 2, 결함 주입) | 동일 (변환기 하나를 모든 유닛이 공유) | 다중 유닛 + 마커 + 관제 UI(목록·상세) |
 | 4 | 동일 | 동일 | + 카메라 패널 |
 | 5 | + MAVLink 시뮬레이터 | 동일 | 동일 (소스 전환만 변경) |
 
@@ -138,7 +138,40 @@ flowchart LR
 - 타원체고와 해발 고도(지오이드 기준)는 다르다. 기준점에서 약 30m 차이가 난다.
 - `HeadingToRotation`은 위치를 받지 않아 원점 기준 ENU 회전을 쓴다. 원점에서 멀어지면 곡률 오차가 생긴다(5km에서 약 0.05°).
 
-## 8. 범위와 보안
+## 8. 3단계 구현 현황
+
+| 계층 | 구성 요소 | 역할 |
+|---|---|---|
+| 데이터 소스 | `UnitKind`, `UnitStatus`, `TelemetrySample` | 종류·상태를 샘플에 실음. 상태는 Normal/Warning을 소스가 보고하고 Lost는 수신 측이 붙임 |
+| 연결 | `UnitStateStore`, `UnitRegistry` | 샘플 수신, 두절 판정(마지막 수신 후 2초), 선택 상태. 판정 로직은 순수 클래스, 시계·Transform 조회는 MonoBehaviour |
+| 연결 | `UnitTelemetryBinder`, `CameraSelectionBinder` | 바인더가 레지스트리·마커에 보고, 선택 상태를 카메라 대상에 연결 |
+| 표시 | `UnitMarker`, `FollowCamera.SetTarget` | 종류·상태를 모양·색으로 표시하는 빌보드, 대상이 없으면 전체 보기 |
+| UI | `UnitListPresenter`, `UnitDetailPresenter`, `UnitFormat` | UI Toolkit 목록·상세 패널. 레지스트리만 읽음 |
+
+```mermaid
+flowchart LR
+    S["FakeGpsSource × N"] --> B["UnitTelemetryBinder × N"]
+    B -- "ToWorld / 고도 해석" --> C["CesiumGeoreferenceConverter (공유)"]
+    B -- "Report" --> R["UnitRegistry / UnitStateStore"]
+    B --> V["DroneView + UnitMarker"]
+    R -- "SelectionChanged" --> CS["CameraSelectionBinder"]
+    CS --> FC["FollowCamera"]
+    R --> L["UnitListPresenter"]
+    R --> D["UnitDetailPresenter"]
+    L -- "Select / ClearSelection" --> R
+```
+
+- 계층 의존은 단방향이다: DataSource는 Core를 참조하지 않고, Core·View·UI가 DataSource 타입을 참조한다.
+- 선택 상태는 `UnitStateStore.Select` 한 곳에만 있어 목록 클릭, 마커 강조, 카메라 추적이 같은 경로를 탄다.
+- 두절은 "샘플이 오지 않음"을 시간으로 판정한다. 소스용(Normal/Warning)과 표시용(+Lost) enum 분리는 5단계에서 재검토한다.
+
+### 한계
+
+- 상세 패널의 고도는 샘플이 보고한 값이며, `Absolute` 값은 WGS84 타원체고다(해발 고도와 약 30m 차이).
+- 지표 높이 캐시 상한이 없다(10기 약 1분 15초에 2,222노드).
+- 3D 오브젝트 클릭 선택은 구현하지 않았다. 선택은 목록·전체 보기 버튼·Esc로 한다.
+
+## 9. 범위와 보안
 
 수신·표시 전용 구조이며 유닛에 명령을 보내는 경로는 없다. 모든 데이터는 가상·공개 데이터다.
 자세한 내용은 [requirements.md](requirements.md)의 5, 6절을 참고한다.
