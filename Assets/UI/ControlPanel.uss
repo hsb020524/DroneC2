@@ -115,23 +115,29 @@
 
 /* 상세 패널 */
 .detail-panel {
-    width: 560px;
+    width: 640px;
 }
 
 .detail-row {
     flex-direction: row;
     justify-content: space-between;
+    align-items: flex-start;
     padding: 6px 0;
 }
 
+/* 라벨은 줄어들지 않게 고정하고, 값은 남은 폭 안에서 줄바꿈한다. (통신 줄이 잘리지 않도록) */
 .detail-key {
-    width: 230px;
+    width: 250px;
+    flex-shrink: 0;
     font-size: 22px;
     color: rgb(185, 195, 210);
 }
 
 .detail-value {
     flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
     font-size: 24px;
-    -unity-text-align: middle-right;
+    white-space: normal;
+    -unity-text-align: upper-right;
 }

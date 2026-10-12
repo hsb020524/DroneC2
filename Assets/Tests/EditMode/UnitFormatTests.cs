@@ -56,7 +56,7 @@ namespace DroneC2.Tests
         {
             Assert.AreEqual("지표 위 고도", UnitFormat.AltitudeLabel(AltitudeMode.AboveGround));
             Assert.AreEqual("지면", UnitFormat.AltitudeLabel(AltitudeMode.ClampToGround));
-            Assert.AreEqual("해발 고도(타원체)", UnitFormat.AltitudeLabel(AltitudeMode.Absolute));
+            Assert.AreEqual("타원체 고도(WGS84)", UnitFormat.AltitudeLabel(AltitudeMode.Absolute));
         }
 
         [Test]

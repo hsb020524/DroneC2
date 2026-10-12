@@ -44,8 +44,8 @@ namespace DroneC2.UI
         }
 
         /// <summary>
-        /// 고도 모드에 맞는 고도 항목 이름. Absolute 값은 타원체고라 지오이드 기준 해발 고도와
-        /// 지역에 따라 수십 m 차이가 나므로 라벨에 기준을 밝힌다.
+        /// 고도 모드에 맞는 고도 항목 이름. Absolute 값은 WGS84 타원체고다.
+        /// 지오이드 기준 해발 고도와 다르므로 "해발"이라고 쓰지 않는다.
         /// </summary>
         public static string AltitudeLabel(AltitudeMode mode)
         {
@@ -53,7 +53,7 @@ namespace DroneC2.UI
             {
                 case AltitudeMode.AboveGround: return "지표 위 고도";
                 case AltitudeMode.ClampToGround: return "지면";
-                default: return "해발 고도(타원체)";
+                default: return "타원체 고도(WGS84)";
             }
         }
 
