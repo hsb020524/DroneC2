@@ -69,3 +69,6 @@ Thumbs.db
 # Cesium ion access token (per developer, never commit)
 /[Aa]ssets/CesiumSettings/Resources/CesiumIonServers/ion.cesium.com.asset
 /[Aa]ssets/CesiumSettings/Resources/CesiumIonServers/ion.cesium.com.asset.meta
+# Cesium runtime settings also has a default ion access token field
+/[Aa]ssets/CesiumSettings/Resources/CesiumRuntimeSettings.asset
+/[Aa]ssets/CesiumSettings/Resources/CesiumRuntimeSettings.asset.meta
