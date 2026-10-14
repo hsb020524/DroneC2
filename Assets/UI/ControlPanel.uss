@@ -31,13 +31,16 @@
 }
 
 /* 목록 패널 */
+/* 높이를 비율로 제한하지 않는다. 부모가 내용에 따라 늘어나는 열이라 고정 패널이 생기면 목록이 줄어 스크롤바가 생겼다.
+   유닛 7기(행 70px)까지는 스크롤 없이 모두 보이고, 그보다 많으면 스크롤한다. */
 .list-panel {
     width: 440px;
-    max-height: 75%;
+    flex-shrink: 0;
 }
 
 .unit-list {
-    flex-shrink: 1;
+    flex-shrink: 0;
+    max-height: 490px;
 }
 
 .unit-row {
@@ -153,8 +156,9 @@
     margin-top: 12px;
 }
 
+/* 영상(16:9)이 프레임을 빈틈없이 채우도록 폭에 맞춘다. 선택 패널 폭 602px -> 339px */
 .camera-frame {
-    height: 324px;
+    height: 339px;
     background-color: rgb(0, 0, 0);
     border-radius: 6px;
     align-items: center;
@@ -207,6 +211,7 @@
     margin-top: 12px;
 }
 
+/* 고정 패널 폭 402px -> 226px */
 .pinned-frame {
-    height: 204px;
+    height: 226px;
 }
