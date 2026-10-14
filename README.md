@@ -129,7 +129,26 @@ C:\UnityProjects\DroneC2-tools\venv\Scripts\python.exe tools/mavlink_emitter.py 
 
 - 에미터 옵션: `--mavlink1`(v1 프레임), `--only-sysids`, `--hold-home-sysids`(홈에 정지), `--port` 등. 전체는 `--help`로 확인합니다.
 - sysid와 유닛 id, 홈 위치는 `Assets/Config/MavlinkUnits.asset`의 테이블이 정하고, 에미터는 같은 값(UAV-01~03 = 1~3, TNK-01~02 = 4~5, 홈 35.563°N 83.499°W)을 씁니다.
-- 가상환경을 지우려면 `C:\UnityProjects\DroneC2-tools` 폴더를 삭제하면 됩니다(약 110MB).
+- 가상환경을 지우려면 `C:\UnityProjects\DroneC2-tools\venv` 폴더를 삭제하면 됩니다(약 110MB).
+
+#### Mission Planner(SITL 시연용, 선택) 설치와 제거
+
+실제 시뮬레이터(ArduPilot SITL) 연동을 확인하려면 [Mission Planner](https://ardupilot.org/planner/docs/mission-planner-installation.html)를 씁니다. 5단계 개발에서는 1.3.83을 사용했습니다. 에미터만으로도 MAVLink 모드는 확인할 수 있어 필수가 아닙니다.
+
+- 설치 파일: `https://firmware.ardupilot.org/Tools/MissionPlanner/MissionPlanner-latest.msi` (공식 디렉터리). 설치 파일에 서명이 없고 공식 체크섬 목록에도 없으므로, 내려받은 뒤 SHA-256을 직접 확인하세요. 개발에 쓴 파일은 `B3AC2F65196629514B2059344DA37C1E9CCD3FE85A46C3FF88BA67A55B65E4D5`이며 VirusTotal에서 0/54 탐지였습니다.
+- 설치는 관리자 권한이 필요하고, 설치 중 **USB 드라이버 설치 창**이 뜹니다. 드라이버는 비행 컨트롤러 USB 연결용이라 이 프로젝트의 시뮬레이션에는 필요하지 않습니다. 드라이버 설치를 거부해도 SITL은 동작합니다.
+- 설치 파일은 저장소 밖(`C:\UnityProjects\DroneC2-tools\downloads`)에 두었습니다. 지우려면 이 폴더(또는 `C:\UnityProjects\DroneC2-tools` 전체)를 삭제합니다.
+- **제거(프로그램):** Windows `설정 > 앱 > 설치된 앱`에서 `Mission Planner`를 제거합니다. 설치 경로는 `C:\Program Files (x86)\Mission Planner`입니다.
+- **제거(드라이버):** 프로그램을 지워도 USB 드라이버 패키지는 남을 수 있습니다. 설치 때 게시자 서명이 `Michael Oborne`인 패키지가 21개(`oem49.inf`~`oem72.inf` 사이, 번호는 PC마다 다름) 추가되었습니다. 관리자 PowerShell에서 먼저 목록을 확인한 뒤 지웁니다.
+
+  ```powershell
+  # 1) 서명자가 Michael Oborne인 드라이버 패키지 확인 (읽기 전용)
+  pnputil /enum-drivers | Out-String | ForEach-Object { $_ -split "(\r?\n){2,}" } |
+    Where-Object { $_ -match 'Michael Oborne' }
+
+  # 2) 확인한 항목의 Published Name(oemNN.inf)마다 제거 (관리자 권한)
+  pnputil /delete-driver oem49.inf /uninstall
+  ```
 
 ### 6. 테스트
 

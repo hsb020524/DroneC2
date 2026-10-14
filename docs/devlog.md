@@ -406,3 +406,24 @@
 - `UnitStatus` 소스용/표시용 분리 재검토(3단계에서 이월).
 - 지표 높이 캐시 상한(2·3단계에서 이월).
 - 저장소 공개 전: 새 폴더에 클론해 README 실행 방법대로 동작하는지 확인.
+
+## 5단계 — MAVLink 시뮬레이터 연동 (작성 중)
+
+> 이 절은 단계가 끝날 때 한 번에 정리한다. 아래는 먼저 남겨 둔 환경 설치 기록이다.
+
+### 설치 기록 (PC에 새로 설치한 것)
+
+| 항목 | 위치 | 용도 | 비고 |
+|---|---|---|---|
+| Python 가상환경 + `pymavlink==2.4.50`(`fastcrc==0.5.0`, `lxml==6.1.3`) | `C:\UnityProjects\DroneC2-tools\venv`(저장소 밖) | MAVLink 에미터(`tools/mavlink_emitter.py`) | 약 113MB. LGPL-3.0, 별도 프로세스로만 사용. 버전은 `tools/requirements.txt`에 고정 |
+| Mission Planner 1.3.83 | `C:\Program Files (x86)\Mission Planner` | ArduPilot SITL 실행과 MAVLink Mirror 포워딩 | 관리자 권한으로 설치 |
+| Mission Planner가 설치한 USB 드라이버 21개 | Windows 드라이버 저장소(`oem49.inf`~`oem72.inf` 범위, 서명자 `Michael Oborne`) | 비행 컨트롤러 USB 연결용(Pixhawk·Cube·Holybro 등). 이 프로젝트의 SITL에는 불필요 | 설치 중 뜬 드라이버 설치 창에서 허용했다. 제거 방법은 README에 있다 |
+| 설치 파일 | `C:\UnityProjects\DroneC2-tools\downloads\MissionPlanner-latest.msi` | — | 저장소 밖 |
+
+**설치 파일 검증.** 공식 디렉터리(`firmware.ardupilot.org/Tools/MissionPlanner/`)의 `checksums.txt`에는 MSI 항목이 없고(자동 업데이트용 `upgrade/` 파일만 있음) MSI에 Authenticode 서명도 없어 공식 체크섬·서명으로는 검증하지 못했다. 대신 다음을 확인했다.
+
+- 파일 크기 119,841,133바이트가 공식 디렉터리 목록과 같다.
+- MSI 내부 `ProductVersion`이 1.3.83이다.
+- SHA-256 `B3AC2F65196629514B2059344DA37C1E9CCD3FE85A46C3FF88BA67A55B65E4D5`를 VirusTotal에서 조회한 결과 **0/54 탐지**였다(2026-10-14, 사용자 확인).
+
+한계: VirusTotal 조회는 "알려진 악성 시그니처가 없다"는 뜻이지 출처의 무결성을 증명하지 않는다.
