@@ -25,6 +25,9 @@ namespace DroneC2.Core
 
         public TelemetrySourceMode Mode => mode;
 
+        /// <summary>상태 표시용. 수신 카운터를 읽는 데만 쓴다.</summary>
+        public MavlinkReceiver Receiver => receiver;
+
         void Awake()
         {
             Apply();

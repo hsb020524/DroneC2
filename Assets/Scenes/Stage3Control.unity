@@ -1736,6 +1736,7 @@ GameObject:
   - component: {fileID: 1958214838}
   - component: {fileID: 1958214841}
   - component: {fileID: 1958214842}
+  - component: {fileID: 1958214843}
   m_Layer: 0
   m_Name: ControlUI
   m_TagString: Untagged
@@ -1820,6 +1821,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DroneC2.Runtime::DroneC2.UI.CameraPanelPresenter
   registry: {fileID: 317126808}
+--- !u!114 &1958214843
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1958214837}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edf3787889826d34d9b520d7e78aa2b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DroneC2.Runtime::DroneC2.UI.DataSourceStatusPresenter
+  selector: {fileID: 664674968}
+  refreshIntervalSec: 0.25
 --- !u!1 &2024960519
 GameObject:
   m_ObjectHideFlags: 0

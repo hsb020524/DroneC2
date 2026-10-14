@@ -22,6 +22,11 @@ namespace DroneC2.DataSource.Mavlink
         MavlinkUdpListener listener;
         MavlinkTelemetryRouter router;
 
+        public int Port => port;
+
+        /// <summary>소켓이 열려 수신 중인지.</summary>
+        public bool IsListening => listener != null;
+
         public MavlinkParser Parser => listener?.Parser;
         public long Datagrams => listener?.Datagrams ?? 0;
         public long DroppedFrames => listener?.Dropped ?? 0;

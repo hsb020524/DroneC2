@@ -28,7 +28,7 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
   - 시연 지역: 그레이트 스모키 산맥 국립공원(미국). 보안상 국내 지역(특히 접경 지역)은 의도적으로 제외했고, 한국 산악 지형과 고도(최고 약 2,000m)·숲 능선이 유사해 대체 지역으로 선정했다.
   - Cesium ion 토큰: DroneC2 전용 토큰, 권한 `assets:read`만, 접근 대상은 필요한 지형·이미지 에셋으로 제한. `Assets/CesiumSettings/`는 통째로 `.gitignore` 처리(커밋 금지, `ion.cesium.com.asset`·`CesiumRuntimeSettings.asset`에 토큰 필드가 있음). 토큰은 채팅에 붙여넣지 않고 사용자가 Unity Cesium 패널에서 직접 연결한다. README에는 본인 토큰을 넣어 실행하라는 안내를 쓴다.
   - 씬이 참조하는 `ionServer` GUID는 무시된 `.asset`에 묶여 있어 다른 환경에서는 참조가 비어 있을 수 있다. 새 환경에서는 Cesium 패널에서 토큰을 연결한 뒤 씬을 열어 확인한다.
-- 5단계 진행(계획: 5-A 상태 enum 분리 → 5-B 파서 → 5-C 수신기 → 5-D 전환 → 5-E 에미터 → 5-F SITL 1기 → 5-G 문서). 완료: 5-A, 5-B, 5-C, 5-D(테스트 144건 통과). 남음: 5-E, 5-F, 5-G. 계획 파일은 사용자 홈의 `.claude/plans/5-mellow-sparrow.md`.
+- 5단계 진행(계획: 5-A 상태 enum 분리 → 5-B 파서 → 5-C 수신기 → 5-D 전환 → 5-E 에미터 → 5-F SITL 1기 → 5-G 문서). 완료: 5-A, 5-B, 5-C, 5-D, 5-E(테스트 150건 통과). 남음: 5-F, 5-G. 계획 파일은 사용자 홈의 `.claude/plans/5-mellow-sparrow.md`.
   - 5-A: 소스 보고용 `ReportedStatus`(Normal/Warning)와 표시용 `UnitStatus`(+Lost)를 분리했다. `TelemetrySample.Status`가 `ReportedStatus`이며 `UnitStateStore`가 변환하고 Lost는 `Tick`만 붙인다. 표시 코드는 수정하지 않았다. (devlog 설계 결정 후보 1)
   - 5-B: `Assets/Scripts/DataSource/Mavlink/`에 CRC·프레임·파서·메시지 디코더(HEARTBEAT, GLOBAL_POSITION_INT)를 두었다. 테스트 112건 통과(신규 24건).
   - 설계 결정 후보 2: **v1·v2를 모두 파싱하고 버전별 카운터(`V1Frames`/`V2Frames`/`Rejected`)를 둔다.** 우리는 송신하지 않아 상대(ArduPilot 등)의 프로토콜 버전을 협상으로 바꿀 수 없으므로 수신 쪽이 유연해야 한다. SITL 연동 때 어떤 버전이 오는지·얼마나 버려지는지 디버깅에 쓴다. v2의 끝 0바이트 생략(truncation)은 메시지 정의 길이로 0 복원한다(잘린 프레임 테스트 포함).
@@ -36,7 +36,9 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
   - 5-D: 고도 기준을 `TelemetrySample.AltitudeReference`(필수 인자)로 옮겼다. `AltitudeMode`는 `DataSource` 네임스페이스이며 Absolute=0, AboveGround=1, ClampToGround=2, HomeRelative=3(숫자 유지). `HomeRelative`는 샘플이 싣고 온 홈 위경도의 지형 높이(`AltitudeResolver`가 홈이 바뀔 때만 재조회) + 상대고도이고, 홈이 NaN이면 바인더가 버리고 유닛당 한 번만 경고한다. 라우터는 고도의 의미만 선언하므로 `MavlinkReceiver`는 Coordinate 계층을 모른다(소스·변환기·뷰는 바인더에서만 만난다는 원칙 유지). 바인더의 직렬화된 `altitudeMode` 필드는 없어졌고 값은 프리팹의 `FakeGpsSource.altitudeReference`(Drone=AboveGround, Tank=ClampToGround)와 시나리오 JSON의 선택 필드 `altitudeMode`(생략 시 종류별 기본값)로 옮겼다.
   - 5-D 소스 전환(FR-015): `Core/TelemetrySourceSelector`(씬에 하나, `Stage3Control`에 배치, 기본 `FakeGps`)가 시작 시 바인더별로 `FakeGpsSource`/`MavlinkUnitSource` 중 하나만 켜고 `UnitTelemetryBinder.SetSource`로 연결한다. MAVLink 모드에서만 `MavlinkReceiver`(씬에서 비활성)를 켠다. 설정은 `Assets/Config/MavlinkUnits.asset`(sysid 1~5 = UAV-01~03, TNK-01~02, 홈 35.563/-83.499, 포트 14560). 유닛 프리팹에 `MavlinkUnitSource`(비활성)를 추가했고 씬 인스턴스에 수신기·sysid를 연결했다. Play에서 FakeGps 모드 정상, 모드 전환 후 합성 프레임 5개로 UAV-01이 이동(HomeRelative 80m, 카운터 v2=5)하고, 되돌리면 소켓이 닫히고 유닛이 복구됨을 확인했다.
   - 설계 결정 후보 4: **MAVLink 모드인데 수신기가 없으면 가짜 GPS로 대체하지 않는다.** 관제 화면에서 가짜 데이터를 실제처럼 보여 주는 것이 가장 위험하므로, 모드를 유지하고 오류를 출력해 데이터가 오지 않게(두절로 남게) 한다. 한계: 저장소는 첫 샘플에서 유닛을 등록하므로, 한 번도 수신하지 못한 유닛은 목록에 나타나지 않는다(두절로 표시하려면 테이블 기반 사전 등록이 필요, 미구현).
-  - 5-E에 추가할 확인: HomeRelative 독립 검증. 에미터로 드론을 홈 위치에 relative_alt=0으로 두면 홈 지점 지표 메시 위 0m 근처여야 한다(가능하면 레이캐스트 등 샘플러와 독립인 측정). 5-D의 Play 높이 실측(60/80/100·0)은 리졸버와 같은 샘플러 기준이라 메시 대비 검증이 아니다.
+  - 5-E: `tools/mavlink_emitter.py`(pymavlink 2.4.50 고정, 저장소 밖 venv `C:\UnityProjects\DroneC2-tools\venv`)로 `stage3-demo.json` 5기를 sysid 1~5로 재생. 상단 데이터 소스 표시줄(`DataSourceStatusPresenter`, "가상 GPS(시뮬레이션)" / "MAVLink · 127.0.0.1:14560 · 수신 N / 거부 M" / "수신기 없음" 등)을 추가했다. 사전 등록은 하지 않기로 했다(후보 4의 한계 유지). 실측 결과는 아래 "5-E 실측" 참고.
+  - 5-E 실측(Play, MAVLink 모드, 에디터): 75초 재생, 데이터그램 4037개(v2 4037/v1 0/거부 0, 위치 샘플 3670), 상태 전이가 시나리오와 일치(TNK-02 경고 30→55초, UAV-02 경고 40→60초, UAV-03 두절 62→복구 68초(송신 중단 60~68초), 에미터 종료 후 2초 뒤 5기 모두 두절). HomeRelative 독립 확인: 드론을 홈에 relative_alt=0으로 두었을 때 샘플러 기준 지표 위 0.00m, 런타임으로 켠 물리 메시(레이캐스트) 기준 +3.41m. 12점 조사에서 샘플러와 메시의 차이는 −4.1~+0.3m(샘플러가 대체로 높음, 격자 보간 오차). 측정 때만 `createPhysicsMeshes`를 런타임으로 켰고 씬에는 저장하지 않았다(기본 False). `Body` 콜라이더(드론 자신)가 먼저 맞아 `RaycastAll`로 타일셋 하위만 골랐다.
+  - (참고) 5-E에 추가할 확인: HomeRelative 독립 검증. 에미터로 드론을 홈 위치에 relative_alt=0으로 두면 홈 지점 지표 메시 위 0m 근처여야 한다(가능하면 레이캐스트 등 샘플러와 독립인 측정). 5-D의 Play 높이 실측(60/80/100·0)은 리졸버와 같은 샘플러 기준이라 메시 대비 검증이 아니다.
   - 설계 결정 후보 3: 고도는 `홈 지형 높이(sysid 설정 테이블의 홈 위경도로 조회) + relative_alt`를 절대 고도로 쓴다. `HOME_POSITION` 요청과 첫 샘플을 홈으로 가정하는 방식은 쓰지 않는다(송신 불필요, 비행 중 접속 시에도 정확).
 - 4단계: `Stage3Control` 씬에 유닛 카메라 패널을 더했다(씬은 새로 만들지 않음). `UnitCameraRig`(View, 유닛 자식 카메라 + `RenderTexture`, 선택·고정된 유닛만 렌더), `CesiumUnitCameraLink`(렌더 중인 카메라만 Cesium 타일 선택에 등록), `UnitCameraPolicy`(렌더 규칙), `UnitStateStore.Pin/Unpin`(고정 1기), `CameraPanelPresenter`(선택·고정 패널). `Scenario`가 시나리오 JSON(FR-004)을 읽어 `FakeGpsSource`에 적용하며 `Assets/Scenarios/stage3-demo.json`이 3단계 5기를 옮긴 파일이다.
   - EditMode 테스트 88건 통과. 카메라 1대 약 0.4ms. Cesium 등록 시 타일 렌더러 95→149(1대)→351(2대), 2대 등록 직후 262ms 정지 1회(에디터 측정). 전차 카메라는 포신이 시야를 가려 차체 앞면 앞(높이 2m, 전방 6.3m)에 둔다.
@@ -81,7 +83,7 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 - 스크립트는 `Assets/Scripts/<역할>/` 아래에 역할별 폴더로 둔다. (예: `DataSource`, `Coordinate`, `View`, `UI`)
 - 환경: Unity `6000.6.5f1`, URP 17.6.0, Input System 1.20.0, Test Framework 1.8.0.
 - `*.csproj`, `*.slnx`와 `Library/`, `Temp/`, `Logs/`, `UserSettings/`는 Unity가 생성하므로 수정하지 않는다.
-- 빌드 스크립트는 없다. EditMode 테스트(`Assets/Tests/EditMode`, 88건)는 UnityMCP `run_tests` 또는 Unity batchmode로 실행한다.
+- 빌드 스크립트는 없다. EditMode 테스트(`Assets/Tests/EditMode`, 150건)는 UnityMCP `run_tests` 또는 Unity batchmode로 실행한다.
 - Player Settings의 Run In Background를 켜 두었다. 에디터가 비포커스여도 Play 모드가 진행된다.
 
 ```powershell

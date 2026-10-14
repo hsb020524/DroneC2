@@ -49,7 +49,7 @@ Cesium World Terrain 위에 위경도 기준으로 드론을 배치하고, 지�
 | 엔진 | Unity `6000.6.5f1`, URP 17.6.0, Input System 1.20.0 |
 | 지형 | Cesium for Unity 1.26.0, Cesium World Terrain, Bing Maps Aerial (Cesium ion) |
 | UI | UI Toolkit (런타임 UIDocument, UXML/USS) |
-| 테스트 | Unity Test Framework 1.8.0 (EditMode 88건) |
+| 테스트 | Unity Test Framework 1.8.0 (EditMode 150건) |
 | 개발 도구 | Claude Code, MCP for Unity |
 | 언어 | C# |
 
@@ -112,9 +112,28 @@ flowchart LR
 
 2단계와 같은 방법으로 토큰을 연결한 뒤 `Assets/Scenes/Stage3Control.unity`를 열고 Play합니다. 왼쪽 목록에서 유닛을 클릭하면 카메라가 따라가고, `전체 보기` 버튼이나 Esc로 선택을 해제합니다. 유닛 중 일부는 시연용으로 일정 시각에 경고 또는 통신 두절 상태가 됩니다. 4단계부터 같은 씬에서 선택한 유닛의 카메라 패널이 오른쪽 아래에 나타나고, `고정` 버튼으로 왼쪽 아래 패널에 유닛 하나를 남길 수 있습니다.
 
-### 5. 테스트
+### 5. MAVLink 모드 (5단계, 진행 중)
 
-Unity의 Test Runner(`Window > General > Test Runner`)에서 EditMode를 실행합니다. 88건이 모두 통과해야 합니다.
+기본은 가상 GPS(시뮬레이션)입니다. 화면 위 가운데의 표시줄이 현재 데이터 소스와 수신 상태를 항상 보여 줍니다. MAVLink로 바꾸려면 `Stage3Control` 씬의 `TelemetrySourceSelector`에서 Mode를 `Mavlink`로 바꾸고 Play합니다. 이때 수신기(`MavlinkReceiver`)가 `127.0.0.1:14560`(UDP)에서 수신만 합니다. 유닛에 명령을 보내지 않습니다.
+
+데이터를 보내는 가상 에미터는 Python 도구이며 `pymavlink`(LGPL-3.0)를 별도 프로세스로만 씁니다. 가상환경은 저장소 밖에 만듭니다.
+
+```powershell
+# 한 번만: 저장소 밖에 가상환경을 만들고 버전을 고정한 의존성을 설치한다.
+python -m venv C:\UnityProjects\DroneC2-tools\venv
+C:\UnityProjects\DroneC2-tools\venv\Scripts\python.exe -m pip install -r tools/requirements.txt
+
+# Unity가 MAVLink 모드로 Play 중일 때 저장소 루트에서 실행한다. (5기, 시나리오 stage3-demo.json 재생)
+C:\UnityProjects\DroneC2-tools\venv\Scripts\python.exe tools/mavlink_emitter.py --duration 75
+```
+
+- 에미터 옵션: `--mavlink1`(v1 프레임), `--only-sysids`, `--hold-home-sysids`(홈에 정지), `--port` 등. 전체는 `--help`로 확인합니다.
+- sysid와 유닛 id, 홈 위치는 `Assets/Config/MavlinkUnits.asset`의 테이블이 정하고, 에미터는 같은 값(UAV-01~03 = 1~3, TNK-01~02 = 4~5, 홈 35.563°N 83.499°W)을 씁니다.
+- 가상환경을 지우려면 `C:\UnityProjects\DroneC2-tools` 폴더를 삭제하면 됩니다(약 110MB).
+
+### 6. 테스트
+
+Unity의 Test Runner(`Window > General > Test Runner`)에서 EditMode를 실행합니다. 150건이 모두 통과해야 합니다.
 
 ## 개발 방식
 

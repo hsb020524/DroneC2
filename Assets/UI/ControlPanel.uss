@@ -15,6 +15,42 @@
     display: none;
 }
 
+/* 데이터 소스 표시줄: 화면 위 가운데에 항상 표시한다. 가상 데이터와 수신 데이터를 혼동하지 않게 한다. */
+.source-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 14px;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.source-status {
+    font-size: 24px;
+    -unity-font-style: bold;
+    padding: 6px 18px;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(16, 20, 26, 0.9);
+    color: rgb(236, 240, 246);
+}
+
+.source-simulated {
+    background-color: rgba(122, 82, 0, 0.92);
+    color: rgb(255, 222, 128);
+}
+
+.source-mavlink {
+    background-color: rgba(0, 72, 92, 0.92);
+    color: rgb(160, 236, 255);
+}
+
+.source-error {
+    background-color: rgba(120, 22, 22, 0.94);
+    color: rgb(255, 178, 178);
+}
+
 .panel {
     background-color: rgba(16, 20, 26, 0.86);
     border-radius: 10px;
