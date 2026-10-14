@@ -65,6 +65,7 @@ namespace DroneC2.Core
                 subscribedStore.UnitAdded += OnUnitState;
                 subscribedStore.StatusChanged += OnUnitState;
                 subscribedStore.SelectionChanged += OnSelectionChanged;
+                subscribedStore.PinnedChanged += OnPinnedChanged;
             }
         }
 
@@ -78,6 +79,7 @@ namespace DroneC2.Core
                 subscribedStore.UnitAdded -= OnUnitState;
                 subscribedStore.StatusChanged -= OnUnitState;
                 subscribedStore.SelectionChanged -= OnSelectionChanged;
+                subscribedStore.PinnedChanged -= OnPinnedChanged;
                 subscribedStore = null;
             }
         }
@@ -119,13 +121,24 @@ namespace DroneC2.Core
 
         void OnSelectionChanged(string selectedId)
         {
-            bool selected = unitId != null && selectedId == unitId;
-            marker?.SetSelected(selected);
+            marker?.SetSelected(unitId != null && selectedId == unitId);
+            RefreshCamera();
+        }
 
-            if (selected && subscribedStore.TryGet(unitId, out UnitState state))
+        void OnPinnedChanged(string pinnedId)
+        {
+            RefreshCamera();
+        }
+
+        void RefreshCamera()
+        {
+            if (cameraRig == null)
+                return;
+
+            if (unitId != null && subscribedStore.TryGet(unitId, out UnitState state))
                 UpdateCamera(state.Status);
             else
-                cameraRig?.SetRendering(false);
+                cameraRig.SetRendering(false);
         }
 
         void UpdateCamera(UnitStatus status)
@@ -133,8 +146,9 @@ namespace DroneC2.Core
             if (cameraRig == null)
                 return;
 
-            bool selected = unitId != null && subscribedStore.SelectedId == unitId;
-            cameraRig.SetRendering(UnitCameraPolicy.ShouldRender(selected, status));
+            bool shown = unitId != null
+                && (subscribedStore.SelectedId == unitId || subscribedStore.PinnedId == unitId);
+            cameraRig.SetRendering(UnitCameraPolicy.ShouldRender(shown, status));
         }
     }
 }

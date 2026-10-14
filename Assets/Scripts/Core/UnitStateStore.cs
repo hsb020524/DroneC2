@@ -60,6 +60,9 @@ namespace DroneC2.Core
         public IReadOnlyList<UnitState> Units => units;
         public string SelectedId { get; private set; }
 
+        /// <summary>선택과 별개로 카메라 패널에 고정한 유닛. 고정은 최대 1기(패널 2개 = 선택 + 고정).</summary>
+        public string PinnedId { get; private set; }
+
         public UnitState Selected =>
             SelectedId != null && byId.TryGetValue(SelectedId, out UnitState state) ? state : null;
 
@@ -74,6 +77,9 @@ namespace DroneC2.Core
 
         /// <summary>선택이 바뀌었을 때. 선택 해제는 null.</summary>
         public event Action<string> SelectionChanged;
+
+        /// <summary>고정이 바뀌었을 때. 고정 해제는 null.</summary>
+        public event Action<string> PinnedChanged;
 
         public bool TryGet(string id, out UnitState state)
         {
@@ -153,6 +159,29 @@ namespace DroneC2.Core
                 SelectionChanged?.Invoke(id);
             }
             return true;
+        }
+
+        /// <summary>등록된 유닛만 고정할 수 있다. 이미 고정된 유닛이 있으면 교체한다.</summary>
+        public bool Pin(string id)
+        {
+            if (id == null || !byId.ContainsKey(id))
+                return false;
+
+            if (PinnedId != id)
+            {
+                PinnedId = id;
+                PinnedChanged?.Invoke(id);
+            }
+            return true;
+        }
+
+        public void Unpin()
+        {
+            if (PinnedId == null)
+                return;
+
+            PinnedId = null;
+            PinnedChanged?.Invoke(null);
         }
 
         public void ClearSelection()

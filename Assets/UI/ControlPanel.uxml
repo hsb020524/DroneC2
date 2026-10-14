@@ -1,10 +1,22 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/ControlPanel.uss" />
     <ui:VisualElement name="root" class="root" picking-mode="Ignore">
+        <ui:VisualElement name="left-column" class="left-column" picking-mode="Ignore">
         <ui:VisualElement name="list-panel" class="panel list-panel">
             <ui:Label name="list-title" class="panel-title" text="유닛 목록" />
             <ui:ScrollView name="unit-list" class="unit-list" />
             <ui:Button name="overview-button" class="overview-button" text="전체 보기" />
+        </ui:VisualElement>
+        <ui:VisualElement name="pinned-panel" class="panel pinned-panel hidden">
+            <ui:VisualElement class="camera-header">
+                <ui:Label name="pinned-title" class="camera-title" text="고정" />
+                <ui:Button name="unpin-button" class="camera-button" text="해제" />
+            </ui:VisualElement>
+            <ui:VisualElement class="camera-frame pinned-frame">
+                <ui:Image name="pinned-image" class="camera-image" />
+                <ui:Label name="pinned-lost" class="camera-lost hidden" text="신호 없음" />
+            </ui:VisualElement>
+        </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="right-column" class="right-column" picking-mode="Ignore">
         <ui:VisualElement name="detail-panel" class="panel detail-panel hidden">
@@ -43,7 +55,10 @@
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="camera-panel" class="panel camera-panel hidden">
-            <ui:Label name="camera-title" class="panel-title" text="카메라" />
+            <ui:VisualElement class="camera-header">
+                <ui:Label name="camera-title" class="camera-title" text="카메라" />
+                <ui:Button name="pin-button" class="camera-button" text="고정" />
+            </ui:VisualElement>
             <ui:VisualElement name="camera-frame" class="camera-frame">
                 <ui:Image name="camera-image" class="camera-image" />
                 <ui:Label name="camera-lost" class="camera-lost hidden" text="신호 없음" />

@@ -177,3 +177,36 @@
     padding: 8px 20px;
     border-radius: 6px;
 }
+
+.camera-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.camera-title {
+    font-size: 28px;
+    -unity-font-style: bold;
+}
+
+.camera-button {
+    height: 40px;
+    min-width: 96px;
+    font-size: 20px;
+}
+
+/* 고정 패널은 왼쪽 목록 아래에 둔다. 두 패널을 합쳐도 1080 높이 안에 들어가야 한다. */
+.left-column {
+    width: 440px;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.pinned-panel {
+    margin-top: 12px;
+}
+
+.pinned-frame {
+    height: 204px;
+}
