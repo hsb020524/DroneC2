@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace DroneC2.View
@@ -18,6 +19,11 @@ namespace DroneC2.View
 
         /// <summary>패널에 표시할 영상. 렌더 여부와 관계없이 마지막 프레임을 유지한다.</summary>
         public RenderTexture Texture => texture;
+
+        /// <summary>렌더 여부가 바뀔 때 카메라와 새 값을 알린다. 지형 타일 선택 등 외부 연동용.</summary>
+        public event Action<Camera, bool> RenderingChanged;
+
+        public Camera Camera => unitCamera;
 
         public bool IsRendering => unitCamera != null && unitCamera.enabled;
 
@@ -53,8 +59,11 @@ namespace DroneC2.View
 
         public void SetRendering(bool value)
         {
-            if (unitCamera != null && texture != null)
-                unitCamera.enabled = value;
+            if (unitCamera == null || texture == null || unitCamera.enabled == value)
+                return;
+
+            unitCamera.enabled = value;
+            RenderingChanged?.Invoke(unitCamera, value);
         }
     }
 }
