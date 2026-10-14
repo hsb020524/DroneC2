@@ -13,11 +13,11 @@ namespace DroneC2.DataSource
         public readonly double SpeedMps;
         public readonly double Time;
         public readonly UnitKind Kind;
-        public readonly UnitStatus Status;
+        public readonly ReportedStatus Status;
 
         public TelemetrySample(string unitId, double latitude, double longitude, double altitudeM,
             double headingDeg, double speedMps, double time,
-            UnitKind kind = UnitKind.Drone, UnitStatus status = UnitStatus.Normal)
+            UnitKind kind = UnitKind.Drone, ReportedStatus status = ReportedStatus.Normal)
         {
             UnitId = unitId;
             Latitude = latitude;

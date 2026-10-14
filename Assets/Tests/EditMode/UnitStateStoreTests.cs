@@ -9,7 +9,7 @@ namespace DroneC2.Tests
     public class UnitStateStoreTests
     {
         static TelemetrySample Sample(string id, UnitKind kind = UnitKind.Drone,
-            UnitStatus status = UnitStatus.Normal, double lat = 35.0, double speed = 10.0)
+            ReportedStatus status = ReportedStatus.Normal, double lat = 35.0, double speed = 10.0)
         {
             return new TelemetrySample(id, lat, -83.0, 80.0, 90.0, speed, 0.0, kind, status);
         }
@@ -115,8 +115,8 @@ namespace DroneC2.Tests
             store.StatusChanged += s => changes.Add(s.Status);
 
             store.Report(Sample("UAV-01"), Vector3.zero, 0.0);
-            store.Report(Sample("UAV-01", status: UnitStatus.Warning), Vector3.zero, 0.1);
-            store.Report(Sample("UAV-01", status: UnitStatus.Warning), Vector3.zero, 0.2);
+            store.Report(Sample("UAV-01", status: ReportedStatus.Warning), Vector3.zero, 0.1);
+            store.Report(Sample("UAV-01", status: ReportedStatus.Warning), Vector3.zero, 0.2);
 
             CollectionAssert.AreEqual(new[] { UnitStatus.Warning }, changes);
         }
@@ -125,10 +125,10 @@ namespace DroneC2.Tests
         public void Tick_LostUnit_ReportedWarning_ComesBackAsWarning()
         {
             var store = new UnitStateStore(1.0);
-            store.Report(Sample("UAV-01", status: UnitStatus.Warning), Vector3.zero, 0.0);
+            store.Report(Sample("UAV-01", status: ReportedStatus.Warning), Vector3.zero, 0.0);
             store.Tick(5.0);
 
-            store.Report(Sample("UAV-01", status: UnitStatus.Warning), Vector3.zero, 6.0);
+            store.Report(Sample("UAV-01", status: ReportedStatus.Warning), Vector3.zero, 6.0);
 
             store.TryGet("UAV-01", out UnitState state);
             Assert.AreEqual(UnitStatus.Warning, state.Status);

@@ -32,7 +32,7 @@ namespace DroneC2.Core
         /// <summary>마지막 샘플을 수신한 시각(수신 측 시계, 초).</summary>
         public double LastReceivedTime { get; internal set; }
 
-        internal UnitStatus ReportedStatus;
+        internal ReportedStatus ReportedStatus;
 
         internal UnitState(string id)
         {
@@ -112,7 +112,7 @@ namespace DroneC2.Core
 
             state.Kind = sample.Kind;
             state.ReportedStatus = sample.Status;
-            state.Status = sample.Status;
+            state.Status = ToUnitStatus(sample.Status);
             state.Latitude = sample.Latitude;
             state.Longitude = sample.Longitude;
             state.AltitudeM = sample.AltitudeM;
@@ -128,6 +128,12 @@ namespace DroneC2.Core
                 StatusChanged?.Invoke(state);
 
             UnitUpdated?.Invoke(state);
+        }
+
+        // 소스 보고 상태에는 Lost가 없다. Lost는 Tick만 붙인다.
+        static UnitStatus ToUnitStatus(ReportedStatus reported)
+        {
+            return reported == ReportedStatus.Warning ? UnitStatus.Warning : UnitStatus.Normal;
         }
 
         /// <summary>시간 경과에 따른 두절 판정. 매 프레임 호출해도 된다.</summary>

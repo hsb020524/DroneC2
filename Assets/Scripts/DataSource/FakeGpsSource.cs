@@ -169,9 +169,9 @@ namespace DroneC2.DataSource
             if (InWindow(elapsed, dropoutStartSec, dropoutDurationSec))
                 return;
 
-            UnitStatus status = InWindow(elapsed, warningStartSec, warningDurationSec)
-                ? UnitStatus.Warning
-                : UnitStatus.Normal;
+            ReportedStatus status = InWindow(elapsed, warningStartSec, warningDurationSec)
+                ? ReportedStatus.Warning
+                : ReportedStatus.Normal;
 
             double heading = (headingDeg + 360.0) % 360.0;
             SampleReceived?.Invoke(new TelemetrySample(

@@ -14,7 +14,7 @@ namespace DroneC2.Tests
             foreach (string id in ids)
             {
                 store.Report(new TelemetrySample(id, 35.0, -83.0, 80.0, 90.0, 10.0, 0.0,
-                    UnitKind.Drone, UnitStatus.Normal), Vector3.zero, 0.0);
+                    UnitKind.Drone, ReportedStatus.Normal), Vector3.zero, 0.0);
             }
             return store;
         }
