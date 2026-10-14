@@ -23,7 +23,7 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
   - EditMode 테스트 35건 통과(좌표 변환 2종 7건씩, 격자 11건, 고도 해석 8건, `DroneView` 2건). Play 모드 확인 완료.
 - 3단계: `Stage3Control` 씬에서 드론 3기(`AboveGround` 60/80/100m)·전차 2기(`ClampToGround`)를 동시에 표시한다. 구조: `UnitKind`/`UnitStatus`는 DataSource 계층, `UnitStateStore`(순수 로직)·`UnitRegistry`(MonoBehaviour)가 수신·두절 판정(2초)·선택을 담고, `UnitMarker`(마커)·`CameraSelectionBinder`(선택→카메라)·UI Toolkit 목록/상세 패널(`UnitListPresenter`, `UnitDetailPresenter`, `UnitFormat`)이 레지스트리만 읽는다. 유닛은 `Assets/Prefabs/Units/Drone.prefab`·`Tank.prefab`이며 변환기·레지스트리는 씬에 하나씩 두고 공유한다.
   - EditMode 테스트 65건 통과. 10기 에디터 평균 643 FPS(빌드 측정 아님). UI는 1920×1080 기준 높이 맞춤 스케일링이다.
-  - 알려진 한계: TNK-01 경로가 도로에서 벗어나는 구간이 있다(야지 주행으로 보고 보정하지 않기로 결정). TNK-02 경로는 짧다(동쪽 연장은 경사 15° 초과). 높이 캐시 상한 없음. 3D 오브젝트 클릭 선택 없음. Esc 키 해제는 키 입력으로 검증하지 못했다.
+  - 알려진 한계: TNK-01 경로가 도로에서 벗어나는 구간이 있다(야지 주행으로 보고 보정하지 않기로 결정). TNK-02 경로는 짧다(동쪽 연장은 경사 15° 초과). 높이 캐시 상한 없음. 3D 오브젝트 클릭 선택 없음. (Esc 키 해제는 사용자가 직접 Play로 확인함)
 - 다음: 5단계 — MAVLink 시뮬레이터 연동(FR-014, FR-015)
   - 시연 지역: 그레이트 스모키 산맥 국립공원(미국). 보안상 국내 지역(특히 접경 지역)은 의도적으로 제외했고, 한국 산악 지형과 고도(최고 약 2,000m)·숲 능선이 유사해 대체 지역으로 선정했다.
   - Cesium ion 토큰: DroneC2 전용 토큰, 권한 `assets:read`만, 접근 대상은 필요한 지형·이미지 에셋으로 제한. `Assets/CesiumSettings/`는 통째로 `.gitignore` 처리(커밋 금지, `ion.cesium.com.asset`·`CesiumRuntimeSettings.asset`에 토큰 필드가 있음). 토큰은 채팅에 붙여넣지 않고 사용자가 Unity Cesium 패널에서 직접 연결한다. README에는 본인 토큰을 넣어 실행하라는 안내를 쓴다.
