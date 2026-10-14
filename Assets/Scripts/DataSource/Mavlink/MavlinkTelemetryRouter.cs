@@ -7,35 +7,28 @@ namespace DroneC2.DataSource.Mavlink
     /// 검증된 MAVLink 프레임을 <see cref="TelemetrySample"/>로 바꾼다. 메인 스레드에서만 호출한다.
     /// - 테이블에 없는 sysid는 무시하고 <see cref="UnknownSysid"/>만 센다.
     /// - 유닛 종류는 테이블을 따른다. HEARTBEAT의 MAV_TYPE이 다르면 sysid마다 경고를 한 번만 낸다.
-    /// - 드론의 고도는 (홈 지형 높이 + relative_alt)이다. 홈 지형 높이는 sysid당 한 번만 조회하고,
-    ///   얻기 전의 위치 샘플은 보류(버림)한다. 스트림이 계속 오므로 대기열에 쌓지 않는다.
+    /// - 고도의 의미만 선언한다. 드론은 relative_alt를 그대로 싣고 기준을 <see cref="AltitudeMode.HomeRelative"/>,
+    ///   홈 위경도는 테이블 값으로 채운다. 지형 높이 조회는 하지 않는다(바인더가 한다).
+    ///   전차는 <see cref="AltitudeMode.ClampToGround"/>로 선언한다.
     /// </summary>
     public sealed class MavlinkTelemetryRouter
     {
-        /// <summary>홈 위치의 지형 높이(타원체고, m) 조회. 아직 얻지 못하면 false.</summary>
-        public delegate bool HomeHeightLookup(double latitude, double longitude, out double heightM);
-
         sealed class Link
         {
             public ReportedStatus Status = ReportedStatus.Normal;
             public double LastHeadingDeg;
-            public bool HasHomeHeight;
-            public double HomeHeightM;
             public bool KindWarned;
         }
 
         const double MinSpeedForHeadingMps = 0.5;
 
         readonly IMavlinkUnitLookup units;
-        readonly HomeHeightLookup homeHeight;
         readonly Action<string> warn;
         readonly Dictionary<byte, Link> links = new Dictionary<byte, Link>();
 
-        /// <param name="homeHeight">null이면 평면(높이 0)으로 간주한다. (AltitudeResolver와 같은 규칙)</param>
-        public MavlinkTelemetryRouter(IMavlinkUnitLookup units, HomeHeightLookup homeHeight, Action<string> warn)
+        public MavlinkTelemetryRouter(IMavlinkUnitLookup units, Action<string> warn)
         {
             this.units = units ?? throw new ArgumentNullException(nameof(units));
-            this.homeHeight = homeHeight;
             this.warn = warn;
         }
 
@@ -43,9 +36,6 @@ namespace DroneC2.DataSource.Mavlink
 
         /// <summary>테이블에 없는 sysid의 프레임 수.</summary>
         public long UnknownSysid { get; private set; }
-
-        /// <summary>홈 지형 높이를 얻기 전이라 보류한 위치 샘플 수.</summary>
-        public long HeldForHome { get; private set; }
 
         /// <summary>샘플로 내보낸 수.</summary>
         public long SamplesProduced { get; private set; }
@@ -91,23 +81,6 @@ namespace DroneC2.DataSource.Mavlink
             if (!MavlinkDecoder.TryDecodeGlobalPosition(frame, out MavlinkGlobalPosition pos))
                 return;
 
-            double altitudeM = 0.0; // 지상 유닛은 ClampToGround가 높이를 정하므로 쓰지 않는다.
-            if (entry.kind == UnitKind.Drone)
-            {
-                if (!link.HasHomeHeight)
-                {
-                    double h = 0.0;
-                    if (homeHeight != null && !homeHeight(entry.homeLatitude, entry.homeLongitude, out h))
-                    {
-                        HeldForHome++;
-                        return;
-                    }
-                    link.HomeHeightM = h;
-                    link.HasHomeHeight = true;
-                }
-                altitudeM = link.HomeHeightM + pos.RelativeAltitudeM;
-            }
-
             double speed = pos.GroundSpeedMps;
             double heading;
             if (pos.HeadingKnown)
@@ -118,8 +91,20 @@ namespace DroneC2.DataSource.Mavlink
                 heading = link.LastHeadingDeg;
             link.LastHeadingDeg = heading;
 
-            var sample = new TelemetrySample(entry.unitId, pos.LatitudeDeg, pos.LongitudeDeg, altitudeM,
-                AltitudeMode.Absolute, heading, speed, now, entry.kind, link.Status);
+            TelemetrySample sample;
+            if (entry.kind == UnitKind.Drone)
+            {
+                sample = new TelemetrySample(entry.unitId, pos.LatitudeDeg, pos.LongitudeDeg,
+                    pos.RelativeAltitudeM, AltitudeMode.HomeRelative, heading, speed, now,
+                    entry.kind, link.Status, entry.homeLatitude, entry.homeLongitude);
+            }
+            else
+            {
+                // 지상 유닛은 지표에 붙인다. 고도 값은 쓰이지 않는다.
+                sample = new TelemetrySample(entry.unitId, pos.LatitudeDeg, pos.LongitudeDeg,
+                    0.0, AltitudeMode.ClampToGround, heading, speed, now, entry.kind, link.Status);
+            }
+
             SamplesProduced++;
             SampleProduced?.Invoke(frame.SystemId, sample);
         }

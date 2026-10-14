@@ -50,16 +50,6 @@ namespace DroneC2.Tests
             return new MavlinkFrame(sysid, 1, MavlinkParser.MsgGlobalPositionInt, p);
         }
 
-        static MavlinkTelemetryRouter.HomeHeightLookup Home(double height, List<(double, double)> calls = null)
-        {
-            return (double lat, double lon, out double h) =>
-            {
-                calls?.Add((lat, lon));
-                h = height;
-                return true;
-            };
-        }
-
         static List<TelemetrySample> Collect(MavlinkTelemetryRouter router)
         {
             var list = new List<TelemetrySample>();
@@ -72,7 +62,7 @@ namespace DroneC2.Tests
         [Test]
         public void UnknownSysid_IsIgnoredAndCounted()
         {
-            var router = new MavlinkTelemetryRouter(new FakeLookup().Add(1, "UAV-01", UnitKind.Drone), Home(0), null);
+            var router = new MavlinkTelemetryRouter(new FakeLookup().Add(1, "UAV-01", UnitKind.Drone), null);
             var samples = Collect(router);
 
             router.Handle(Position(9), 0.0);
@@ -83,80 +73,53 @@ namespace DroneC2.Tests
         }
 
         [Test]
-        public void Drone_AltitudeIsHomeTerrainHeightPlusRelativeAlt()
+        public void Drone_DeclaresHomeRelative_WithRelativeAltAndTableHome()
         {
-            var router = new MavlinkTelemetryRouter(new FakeLookup().Add(1, "UAV-01", UnitKind.Drone), Home(1700.0), null);
+            var lookup = new FakeLookup().Add(1, "UAV-01", UnitKind.Drone, 35.5, -83.4);
+            var router = new MavlinkTelemetryRouter(lookup, null);
             var samples = Collect(router);
 
-            router.Handle(Position(1, relAltM: 80.0), 5.0);
+            // 첫 샘플 위치(35.6, -83.5)는 홈이 아니다(비행 중 접속). 홈은 테이블 값이어야 한다.
+            router.Handle(Position(1, lat: 35.6, lon: -83.5, relAltM: 80.0), 5.0);
 
             Assert.AreEqual(1, samples.Count);
             Assert.AreEqual("UAV-01", samples[0].UnitId);
-            Assert.AreEqual(1780.0, samples[0].AltitudeM, 1e-6);
+            Assert.AreEqual(AltitudeMode.HomeRelative, samples[0].AltitudeReference);
+            Assert.AreEqual(80.0, samples[0].AltitudeM, 1e-6); // MSL(1580)이 아니라 상대고도
+            Assert.IsTrue(samples[0].HasHome);
+            Assert.AreEqual(35.5, samples[0].HomeLatitude, 1e-9);
+            Assert.AreEqual(-83.4, samples[0].HomeLongitude, 1e-9);
+            Assert.AreEqual(35.6, samples[0].Latitude, 1e-6);
             Assert.AreEqual(UnitKind.Drone, samples[0].Kind);
             Assert.AreEqual(5.0, samples[0].Time, 1e-9);
         }
 
         [Test]
-        public void Drone_HomeHeightIsLookedUpOnceAtTableHome()
+        public void Tank_DeclaresClampToGround_WithoutHome()
         {
-            var calls = new List<(double, double)>();
-            var lookup = new FakeLookup().Add(1, "UAV-01", UnitKind.Drone, 35.5, -83.4);
-            var router = new MavlinkTelemetryRouter(lookup, Home(1000.0, calls), null);
-
-            // 첫 샘플의 위치는 홈이 아니다(비행 중 접속). 조회는 테이블의 홈 위치로 해야 한다.
-            router.Handle(Position(1, lat: 35.6, lon: -83.5), 0.0);
-            router.Handle(Position(1, lat: 35.61, lon: -83.51), 0.1);
-            router.Handle(Position(1, lat: 35.62, lon: -83.52), 0.2);
-
-            Assert.AreEqual(1, calls.Count);
-            Assert.AreEqual(35.5, calls[0].Item1, 1e-9);
-            Assert.AreEqual(-83.4, calls[0].Item2, 1e-9);
-        }
-
-        [Test]
-        public void Drone_SamplesAreHeldUntilHomeHeightIsAvailable()
-        {
-            bool ready = false;
-            var router = new MavlinkTelemetryRouter(new FakeLookup().Add(1, "UAV-01", UnitKind.Drone),
-                (double lat, double lon, out double h) => { h = 1500.0; return ready; }, null);
-            var samples = Collect(router);
-
-            router.Handle(Position(1), 0.0);
-            router.Handle(Position(1), 0.1);
-            Assert.AreEqual(0, samples.Count);
-            Assert.AreEqual(2, router.HeldForHome);
-
-            ready = true;
-            router.Handle(Position(1), 0.2);
-            Assert.AreEqual(1, samples.Count);
-            Assert.AreEqual(1580.0, samples[0].AltitudeM, 1e-6);
-        }
-
-        [Test]
-        public void NoTerrainSampler_TreatsHomeHeightAsZero()
-        {
-            var router = new MavlinkTelemetryRouter(new FakeLookup().Add(1, "UAV-01", UnitKind.Drone), null, null);
-            var samples = Collect(router);
-
-            router.Handle(Position(1, relAltM: 60.0), 0.0);
-
-            Assert.AreEqual(1, samples.Count);
-            Assert.AreEqual(60.0, samples[0].AltitudeM, 1e-6);
-        }
-
-        [Test]
-        public void Tank_IsNotHeldForHomeHeight()
-        {
-            var router = new MavlinkTelemetryRouter(new FakeLookup().Add(7, "TNK-01", UnitKind.Tank),
-                (double lat, double lon, out double h) => { h = 0; return false; }, null);
+            var router = new MavlinkTelemetryRouter(new FakeLookup().Add(7, "TNK-01", UnitKind.Tank), null);
             var samples = Collect(router);
 
             router.Handle(Position(7), 0.0);
 
             Assert.AreEqual(1, samples.Count);
             Assert.AreEqual(UnitKind.Tank, samples[0].Kind);
-            Assert.AreEqual(0, router.HeldForHome);
+            Assert.AreEqual(AltitudeMode.ClampToGround, samples[0].AltitudeReference);
+            Assert.IsFalse(samples[0].HasHome);
+        }
+
+        [Test]
+        public void Kind_FollowsTable_NotHeartbeat_ForAltitudeDeclaration()
+        {
+            // 테이블은 전차인데 기체는 쿼드콥터(MAV_TYPE 2)라고 해도 테이블을 따른다.
+            var router = new MavlinkTelemetryRouter(new FakeLookup().Add(7, "TNK-01", UnitKind.Tank), null);
+            var samples = Collect(router);
+
+            router.Handle(Heartbeat(7, 2, 4), 0.0);
+            router.Handle(Position(7), 0.1);
+
+            Assert.AreEqual(UnitKind.Tank, samples[0].Kind);
+            Assert.AreEqual(AltitudeMode.ClampToGround, samples[0].AltitudeReference);
         }
 
         [Test]
@@ -164,7 +127,7 @@ namespace DroneC2.Tests
         {
             var warnings = new List<string>();
             var lookup = new FakeLookup().Add(1, "UAV-01", UnitKind.Drone).Add(2, "UAV-02", UnitKind.Drone);
-            var router = new MavlinkTelemetryRouter(lookup, Home(0), warnings.Add);
+            var router = new MavlinkTelemetryRouter(lookup, warnings.Add);
             var samples = Collect(router);
 
             router.Handle(Heartbeat(1, 10, 4), 0.0); // 테이블은 드론, 기체는 ROVER
@@ -185,7 +148,7 @@ namespace DroneC2.Tests
         public void MatchingKind_DoesNotWarn()
         {
             var warnings = new List<string>();
-            var router = new MavlinkTelemetryRouter(new FakeLookup().Add(1, "UAV-01", UnitKind.Drone), Home(0), warnings.Add);
+            var router = new MavlinkTelemetryRouter(new FakeLookup().Add(1, "UAV-01", UnitKind.Drone), warnings.Add);
 
             router.Handle(Heartbeat(1, 2, 4), 0.0);
 
@@ -195,7 +158,7 @@ namespace DroneC2.Tests
         [Test]
         public void HeartbeatStatus_IsCarriedIntoSamples()
         {
-            var router = new MavlinkTelemetryRouter(new FakeLookup().Add(1, "UAV-01", UnitKind.Drone), Home(0), null);
+            var router = new MavlinkTelemetryRouter(new FakeLookup().Add(1, "UAV-01", UnitKind.Drone), null);
             var samples = Collect(router);
 
             router.Handle(Position(1), 0.0);
@@ -212,7 +175,7 @@ namespace DroneC2.Tests
         [Test]
         public void Heading_UsesHdgWhenKnown_ElseVelocity_ElseLast()
         {
-            var router = new MavlinkTelemetryRouter(new FakeLookup().Add(1, "UAV-01", UnitKind.Drone), Home(0), null);
+            var router = new MavlinkTelemetryRouter(new FakeLookup().Add(1, "UAV-01", UnitKind.Drone), null);
             var samples = Collect(router);
 
             router.Handle(Position(1, hdgCdeg: 9000), 0.0);                       // 90도
@@ -238,14 +201,15 @@ namespace DroneC2.Tests
             };
             var frames = new List<MavlinkFrame>();
             new MavlinkParser().Parse(frameBytes, 0, frameBytes.Length, frames);
-            var router = new MavlinkTelemetryRouter(new FakeLookup().Add(1, "UAV-01", UnitKind.Drone), Home(1700.0), null);
+            var router = new MavlinkTelemetryRouter(new FakeLookup().Add(1, "UAV-01", UnitKind.Drone), null);
             var samples = Collect(router);
 
             router.Handle(frames[0], 1.0);
 
             Assert.AreEqual(1, samples.Count);
             Assert.AreEqual(35.563, samples[0].Latitude, 1e-9);
-            Assert.AreEqual(1780.0, samples[0].AltitudeM, 1e-6);
+            Assert.AreEqual(80.0, samples[0].AltitudeM, 1e-6);
+            Assert.AreEqual(AltitudeMode.HomeRelative, samples[0].AltitudeReference);
             Assert.AreEqual(5.0, samples[0].SpeedMps, 1e-6);
             Assert.AreEqual(0.0, samples[0].HeadingDeg, 1e-6);
         }
