@@ -36,8 +36,10 @@ namespace DroneC2.Core
             bool useMavlink = mode == TelemetrySourceMode.Mavlink;
             if (useMavlink && receiver == null)
             {
-                Debug.LogError("TelemetrySourceSelector: MAVLink 모드에는 수신기(MavlinkReceiver)가 필요합니다. 가짜 GPS로 대신합니다.", this);
-                useMavlink = false;
+                // 가짜 데이터를 실제 데이터처럼 보여 주는 것이 가장 위험하므로 가짜 GPS로 대체하지 않는다.
+                // MAVLink 모드를 유지하면 샘플이 오지 않아 유닛은 수신 없음(두절)으로 남는다.
+                Debug.LogError("TelemetrySourceSelector: MAVLink 모드에는 수신기(MavlinkReceiver)가 필요합니다. "
+                    + "가짜 GPS로 대체하지 않고 MAVLink 모드를 유지하므로 데이터가 수신되지 않습니다.", this);
             }
 
             if (receiver != null)

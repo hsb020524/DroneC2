@@ -100,7 +100,7 @@ namespace DroneC2.Tests
         }
 
         [Test]
-        public void MavlinkMode_WithoutReceiver_FallsBackToFakeGps()
+        public void MavlinkMode_WithoutReceiver_StaysMavlink_AndNeverFallsBackToFakeGps()
         {
             var unit = NewUnit("UAV-01");
             TelemetrySourceSelector selector = NewSelector(TelemetrySourceMode.Mavlink, null);
@@ -108,9 +108,10 @@ namespace DroneC2.Tests
             LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("수신기"));
             selector.Apply();
 
-            Assert.IsTrue(unit.fake.enabled);
-            Assert.IsFalse(unit.mavlink.enabled);
-            Assert.AreSame(unit.fake, unit.binder.CurrentSource);
+            // 가짜 데이터를 실제처럼 보여 주지 않는다. 가짜 소스는 꺼지고 MAVLink 소스에 연결된다.
+            Assert.IsFalse(unit.fake.enabled);
+            Assert.IsTrue(unit.mavlink.enabled);
+            Assert.AreSame(unit.mavlink, unit.binder.CurrentSource);
         }
 
         [Test]
