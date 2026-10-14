@@ -12,6 +12,7 @@ namespace DroneC2.Core
         [SerializeField, Min(0.1f)] float lostTimeoutSec = 2f;
 
         readonly Dictionary<string, Transform> views = new Dictionary<string, Transform>();
+        readonly Dictionary<string, RenderTexture> cameraTextures = new Dictionary<string, RenderTexture>();
         UnitStateStore store;
 
         public UnitStateStore Store => store ??= new UnitStateStore(lostTimeoutSec);
@@ -34,6 +35,26 @@ namespace DroneC2.Core
                 return;
 
             views[unitId] = view;
+        }
+
+        /// <summary>유닛 카메라 영상(RenderTexture)을 등록한다. 패널은 이 텍스처만 읽는다.</summary>
+        public void RegisterCameraTexture(string unitId, RenderTexture texture)
+        {
+            if (string.IsNullOrEmpty(unitId) || texture == null)
+                return;
+
+            cameraTextures[unitId] = texture;
+        }
+
+        public bool TryGetCameraTexture(string unitId, out RenderTexture texture)
+        {
+            if (unitId == null)
+            {
+                texture = null;
+                return false;
+            }
+
+            return cameraTextures.TryGetValue(unitId, out texture) && texture != null;
         }
 
         public bool TryGetView(string unitId, out Transform view)

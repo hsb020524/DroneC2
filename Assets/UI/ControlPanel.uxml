@@ -6,6 +6,7 @@
             <ui:ScrollView name="unit-list" class="unit-list" />
             <ui:Button name="overview-button" class="overview-button" text="전체 보기" />
         </ui:VisualElement>
+        <ui:VisualElement name="right-column" class="right-column" picking-mode="Ignore">
         <ui:VisualElement name="detail-panel" class="panel detail-panel hidden">
             <ui:Label name="detail-title" class="panel-title" text="-" />
             <ui:VisualElement class="detail-row">
@@ -40,6 +41,14 @@
                 <ui:Label class="detail-key" text="방위" />
                 <ui:Label name="detail-heading" class="detail-value" text="-" />
             </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="camera-panel" class="panel camera-panel hidden">
+            <ui:Label name="camera-title" class="panel-title" text="카메라" />
+            <ui:VisualElement name="camera-frame" class="camera-frame">
+                <ui:Image name="camera-image" class="camera-image" />
+                <ui:Label name="camera-lost" class="camera-lost hidden" text="신호 없음" />
+            </ui:VisualElement>
+        </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

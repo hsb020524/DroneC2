@@ -101,6 +101,8 @@ namespace DroneC2.Core
             {
                 unitId = sample.UnitId;
                 registry.RegisterView(unitId, view.transform);
+                if (cameraRig != null)
+                    registry.RegisterCameraTexture(unitId, cameraRig.Texture);
             }
 
             registry.Store.Report(sample, position, Time.timeAsDouble, altitudeMode);

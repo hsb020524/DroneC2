@@ -32,7 +32,7 @@ namespace DroneC2.View
 
             texture = new RenderTexture(width, height, depthBits, RenderTextureFormat.ARGB32)
             {
-                name = $"UnitCamera_{name}",
+                name = $"UnitCamera_{(transform.parent != null ? transform.parent.name : name)}",
             };
             unitCamera.targetTexture = texture;
             unitCamera.enabled = false;
