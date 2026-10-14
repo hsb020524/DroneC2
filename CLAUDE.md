@@ -32,6 +32,10 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 - 3단계 문서: `docs/devlog.md` 3단계 정리(스크린샷 `docs/images/stage3-control-ui.png`, GIF `stage3-control-ui.gif`), `README.md`·`docs/requirements.md`·`docs/architecture.md` 갱신 완료. 이후 단계가 끝날 때 README의 진행 상황·맨 위 GIF를 갱신한다.
 - 단계 작업은 작은 단위로 나눠 진행하며, 각 단위마다 씬 저장 후 커밋한다.
 
+### 남은 할 일
+
+- [ ] 저장소 공개 전: 새 폴더에 클론해서 README 실행 방법대로 동작하는지 확인 (Cesium ion 토큰 연결 후 씬 열기, `ionServer` 참조가 비어 있지 않은지 포함)
+
 | 단계 | 내용 | 상태 |
 |---|---|---|
 | 1 | 평면 위 가짜 GPS 드론 이동·경로 표시 | 완료 |
