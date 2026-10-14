@@ -19,6 +19,8 @@ namespace DroneC2.Core
         [SerializeField] UnitRegistry registry;
         [Tooltip("비워 두면 마커를 갱신하지 않는다. 레지스트리가 있어야 상태가 반영된다.")]
         [SerializeField] UnitMarker marker;
+        [Tooltip("비워 두면 카메라 영상을 만들지 않는다. 선택된 유닛만 렌더한다.")]
+        [SerializeField] UnitCameraRig cameraRig;
 
         ITelemetrySource source;
         ICoordinateConverter converter;
@@ -57,7 +59,7 @@ namespace DroneC2.Core
             altitudeResolver = new AltitudeResolver(converterBehaviour as ITerrainHeightSampler);
             source.SampleReceived += OnSample;
 
-            if (registry != null && marker != null)
+            if (registry != null && (marker != null || cameraRig != null))
             {
                 subscribedStore = registry.Store;
                 subscribedStore.UnitAdded += OnUnitState;
@@ -106,13 +108,31 @@ namespace DroneC2.Core
 
         void OnUnitState(UnitState state)
         {
-            if (state.Id == unitId)
-                marker.Apply(state.Kind, state.Status);
+            if (state.Id != unitId)
+                return;
+
+            marker?.Apply(state.Kind, state.Status);
+            UpdateCamera(state.Status);
         }
 
         void OnSelectionChanged(string selectedId)
         {
-            marker.SetSelected(unitId != null && selectedId == unitId);
+            bool selected = unitId != null && selectedId == unitId;
+            marker?.SetSelected(selected);
+
+            if (selected && subscribedStore.TryGet(unitId, out UnitState state))
+                UpdateCamera(state.Status);
+            else
+                cameraRig?.SetRendering(false);
+        }
+
+        void UpdateCamera(UnitStatus status)
+        {
+            if (cameraRig == null)
+                return;
+
+            bool selected = unitId != null && subscribedStore.SelectedId == unitId;
+            cameraRig.SetRendering(UnitCameraPolicy.ShouldRender(selected, status));
         }
     }
 }
