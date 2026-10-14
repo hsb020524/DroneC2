@@ -1,7 +1,7 @@
 # DroneC2 시스템 구조
 
-- 버전: v0.4 (초안)
-- 상태: 3단계 구현 반영 — 4단계 이후 클래스명·버전은 예정 사항이며 구현 중 변경될 수 있다.
+- 버전: v0.5 (초안)
+- 상태: 4단계 구현 반영 — 5단계 이후 클래스명·버전은 예정 사항이며 구현 중 변경될 수 있다.
 
 ## 1. 설계 원칙
 
@@ -77,7 +77,7 @@ sequenceDiagram
 | 1 (완료) | 가짜 GPS (웨이포인트는 인스펙터 입력, 시나리오 JSON은 미구현) | 평면 로컬 변환 | 평면 위 드론, 경로선, 추적 카메라 |
 | 2 (완료) | 동일 | Cesium 지오레퍼런스 + 지표 높이 조회 | 실제 지형 위 유닛 (표시 계층 변경 없음) |
 | 3 (완료) | 다중 유닛 가짜 GPS(드론 3·전차 2, 결함 주입) | 동일 (변환기 하나를 모든 유닛이 공유) | 다중 유닛 + 마커 + 관제 UI(목록·상세) |
-| 4 | 동일 | 동일 | + 카메라 패널 |
+| 4 (완료) | 동일 + 시나리오 JSON 로딩 | 동일 | + 유닛 가상 카메라와 카메라 패널(선택·고정) |
 | 5 | + MAVLink 시뮬레이터 | 동일 | 동일 (소스 전환만 변경) |
 
 ## 5. 계층별 책임
@@ -171,7 +171,38 @@ flowchart LR
 - 지표 높이 캐시 상한이 없다(10기 약 1분 15초에 2,222노드).
 - 3D 오브젝트 클릭 선택은 구현하지 않았다. 선택은 목록·전체 보기 버튼·Esc로 한다.
 
-## 9. 범위와 보안
+## 9. 4단계 구현 현황
+
+| 계층 | 구성 요소 | 역할 |
+|---|---|---|
+| 데이터 소스 | `Scenario`, `FakeGpsSource.scenarioJson` | 경로·고도·속도·종류·결함 구간을 JSON에서 읽고 검증. `FakeGpsSource`가 유닛 id로 항목을 찾아 적용 |
+| 표시 | `UnitCameraRig` | 유닛 자식 카메라 + `RenderTexture`. `SetRendering`으로 켠 동안만 렌더, 상태 변화는 `RenderingChanged`로 알림 |
+| 표시 | `CesiumUnitCameraLink` | 렌더 중인 유닛 카메라를 Cesium 타일 선택 카메라에 등록·해제 |
+| 연결 | `UnitCameraPolicy`, `UnitStateStore.Pin`, `UnitRegistry.TryGetCameraTexture` | 렌더 규칙(순수 함수), 고정 상태, 유닛별 영상 텍스처 조회 |
+| UI | `CameraPanelPresenter` | 선택 패널·고정 패널, 고정/해제 버튼, 두절 오버레이. 레지스트리만 읽음 |
+
+```mermaid
+flowchart LR
+    R["UnitRegistry / UnitStateStore<br/>선택 · 고정 · 상태"] -- "SelectionChanged / PinnedChanged / StatusChanged" --> B["UnitTelemetryBinder"]
+    B -- "UnitCameraPolicy.ShouldRender" --> RIG["UnitCameraRig<br/>SetRendering"]
+    RIG -- "RenderTexture" --> R
+    RIG -- "RenderingChanged" --> LINK["CesiumUnitCameraLink"]
+    LINK -- "additionalCameras" --> T["Cesium3DTileset 타일 선택"]
+    R -- "TryGetCameraTexture" --> P["CameraPanelPresenter"]
+    P -- "Pin / Unpin" --> R
+```
+
+- 카메라 렌더 규칙은 "선택되었거나 고정되었고 두절이 아니면 렌더"이며, 규칙은 엔진 비의존 순수 함수라 EditMode에서 검증한다.
+- `UnitCameraRig`는 Cesium을 알지 못하고, 렌더 중인 카메라만 타일 선택에 올리는 일은 `CesiumUnitCameraLink`가 맡는다. 결합 지점이 한 곳이다.
+- 별도 시점을 렌더하므로 렌더 비용과 함께 그 시점의 타일 선택 비용을 낸다. 등록 수가 패널 수(최대 2)로 묶인다.
+
+### 한계
+
+- 고정은 1기(패널 2개)까지다. 카메라 영상은 가상이며 해상도는 640×360 고정이다.
+- 카메라를 Cesium에 등록하면 타일·메모리가 늘고, 등록 직후 로딩 구간에 정지가 한 번 관측됐다(2대, 262ms).
+- 시나리오는 시작 시점에 한 번 읽어 적용한다. 고도 모드는 시나리오에 없고 바인더 설정이다.
+
+## 10. 범위와 보안
 
 수신·표시 전용 구조이며 유닛에 명령을 보내는 경로는 없다. 모든 데이터는 가상·공개 데이터다.
 자세한 내용은 [requirements.md](requirements.md)의 5, 6절을 참고한다.

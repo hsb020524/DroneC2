@@ -2,9 +2,9 @@
 
 드론·전차의 GPS 위치와 작전 상황을 3D 지형 위에서 보여주는 관제 시스템 포트폴리오 프로젝트입니다. Unity로 만들며, 모든 데이터는 가상 값과 공개 지형 데이터입니다. 수신·표시 전용이며 유닛에 명령을 보내는 경로는 없습니다.
 
-![3단계: 관제 UI에서 유닛을 선택해 추적하는 화면](docs/images/stage3-control-ui.gif)
+![4단계: 선택한 유닛과 고정한 유닛의 카메라 패널이 함께 보이는 화면](docs/images/stage4-camera-panel.gif)
 
-*3단계 결과(15초). 전체 보기에서 드론·전차를 차례로 선택해 추적하고, 경고 상태가 목록·상세 패널·마커에 함께 표시됩니다.*
+*4단계 결과(15초). 유닛을 선택하면 해당 유닛의 가상 카메라 영상이 패널에 뜨고, 다른 유닛을 선택해도 고정한 유닛의 영상은 유지됩니다.*
 
 ## 진행 상황
 
@@ -13,7 +13,7 @@
 | 1 | 평면 위 가짜 GPS 드론 이동·경로 표시 | 완료 |
 | 2 | Cesium 실제 지형 위 이동, 지표 기준 고도 | 완료 |
 | 3 | 다중 유닛(드론 3·전차 2) + 관제 UI | 완료 |
-| 4 | 카메라 패널 | 예정 |
+| 4 | 카메라 패널(선택·고정 2개), 시나리오 JSON | 완료 |
 | 5 | MAVLink 시뮬레이터 연동 | 예정 |
 
 ### 1단계 — 평면 위 가짜 GPS
@@ -34,6 +34,12 @@ Cesium World Terrain 위에 위경도 기준으로 드론을 배치하고, 지�
 
 ![3단계 결과 GIF](docs/images/stage3-control-ui.gif)
 
+### 4단계 — 카메라 패널
+
+유닛마다 가상 카메라(드론은 직하방, 전차는 차체 전방)를 달고, 선택한 유닛의 영상을 패널에 표시합니다. `고정`으로 한 유닛을 패널에 남겨 두면 두 유닛을 동시에 볼 수 있습니다. 카메라는 선택·고정된 유닛만 렌더하며, 렌더 중인 카메라만 Cesium 타일 선택에 등록해 타일 부담을 패널 수로 묶었습니다. 경로·고도·속도는 시나리오 JSON(`Assets/Scenarios/stage3-demo.json`)으로 읽습니다.
+
+![4단계 결과 GIF](docs/images/stage4-camera-panel.gif)
+
 단계별 구현·검증·겪은 문제는 [docs/devlog.md](docs/devlog.md)에 정리했습니다.
 
 ## 기술 스택
@@ -43,7 +49,7 @@ Cesium World Terrain 위에 위경도 기준으로 드론을 배치하고, 지�
 | 엔진 | Unity `6000.6.5f1`, URP 17.6.0, Input System 1.20.0 |
 | 지형 | Cesium for Unity 1.26.0, Cesium World Terrain, Bing Maps Aerial (Cesium ion) |
 | UI | UI Toolkit (런타임 UIDocument, UXML/USS) |
-| 테스트 | Unity Test Framework 1.8.0 (EditMode 65건) |
+| 테스트 | Unity Test Framework 1.8.0 (EditMode 88건) |
 | 개발 도구 | Claude Code, MCP for Unity |
 | 언어 | C# |
 
@@ -57,9 +63,11 @@ flowchart LR
     BIND --> CONV["좌표 변환<br/>ICoordinateConverter<br/>평면 근사 / Cesium 지오레퍼런스"]
     CONV --> VIEW["표시<br/>DroneView, PathTrail, UnitMarker, FollowCamera"]
     CONV -. "ITerrainHeightSampler" .-> BIND
-    BIND --> REG["UnitRegistry<br/>(상태·선택)"]
-    REG --> UI["관제 UI<br/>목록·상세 패널"]
+    BIND --> REG["UnitRegistry<br/>(상태·선택·고정)"]
+    REG --> UI["관제 UI<br/>목록·상세·카메라 패널"]
     REG --> CAM["카메라 선택"]
+    BIND --> RIG["UnitCameraRig<br/>(선택·고정 시만 렌더)"]
+    RIG --> REG
 ```
 
 - 데이터 소스는 `ITelemetrySource`, 좌표 변환은 `ICoordinateConverter` 뒤에 둡니다.
@@ -102,11 +110,11 @@ flowchart LR
 
 ### 4. 3단계 씬 (Cesium ion 토큰 필요)
 
-2단계와 같은 방법으로 토큰을 연결한 뒤 `Assets/Scenes/Stage3Control.unity`를 열고 Play합니다. 왼쪽 목록에서 유닛을 클릭하면 카메라가 따라가고, `전체 보기` 버튼이나 Esc로 선택을 해제합니다. 유닛 중 일부는 시연용으로 일정 시각에 경고 또는 통신 두절 상태가 됩니다.
+2단계와 같은 방법으로 토큰을 연결한 뒤 `Assets/Scenes/Stage3Control.unity`를 열고 Play합니다. 왼쪽 목록에서 유닛을 클릭하면 카메라가 따라가고, `전체 보기` 버튼이나 Esc로 선택을 해제합니다. 유닛 중 일부는 시연용으로 일정 시각에 경고 또는 통신 두절 상태가 됩니다. 4단계부터 같은 씬에서 선택한 유닛의 카메라 패널이 오른쪽 아래에 나타나고, `고정` 버튼으로 왼쪽 아래 패널에 유닛 하나를 남길 수 있습니다.
 
 ### 5. 테스트
 
-Unity의 Test Runner(`Window > General > Test Runner`)에서 EditMode를 실행합니다. 65건이 모두 통과해야 합니다.
+Unity의 Test Runner(`Window > General > Test Runner`)에서 EditMode를 실행합니다. 88건이 모두 통과해야 합니다.
 
 ## 개발 방식
 
