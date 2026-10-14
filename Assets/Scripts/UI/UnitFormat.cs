@@ -53,6 +53,7 @@ namespace DroneC2.UI
             {
                 case AltitudeMode.AboveGround: return "지표 위 고도";
                 case AltitudeMode.ClampToGround: return "지면";
+                case AltitudeMode.HomeRelative: return "홈 기준 고도";
                 default: return "타원체 고도(WGS84)";
             }
         }

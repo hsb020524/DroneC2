@@ -175,8 +175,8 @@ namespace DroneC2.DataSource
 
             double heading = (headingDeg + 360.0) % 360.0;
             SampleReceived?.Invoke(new TelemetrySample(
-                unitId, latitude, longitude, altitudeM, heading, speedMps, Time.timeAsDouble,
-                unitKind, status));
+                unitId, latitude, longitude, altitudeM, AltitudeMode.Absolute, heading, speedMps,
+                Time.timeAsDouble, unitKind, status));
         }
 
         static bool InWindow(double elapsed, double start, double duration)

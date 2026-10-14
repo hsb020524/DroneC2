@@ -119,7 +119,7 @@ namespace DroneC2.DataSource.Mavlink
             link.LastHeadingDeg = heading;
 
             var sample = new TelemetrySample(entry.unitId, pos.LatitudeDeg, pos.LongitudeDeg, altitudeM,
-                heading, speed, now, entry.kind, link.Status);
+                AltitudeMode.Absolute, heading, speed, now, entry.kind, link.Status);
             SamplesProduced++;
             SampleProduced?.Invoke(frame.SystemId, sample);
         }

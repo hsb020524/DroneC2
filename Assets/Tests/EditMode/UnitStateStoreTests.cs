@@ -11,7 +11,7 @@ namespace DroneC2.Tests
         static TelemetrySample Sample(string id, UnitKind kind = UnitKind.Drone,
             ReportedStatus status = ReportedStatus.Normal, double lat = 35.0, double speed = 10.0)
         {
-            return new TelemetrySample(id, lat, -83.0, 80.0, 90.0, speed, 0.0, kind, status);
+            return new TelemetrySample(id, lat, -83.0, 80.0, AltitudeMode.Absolute, 90.0, speed, 0.0, kind, status);
         }
 
         [Test]
