@@ -630,6 +630,7 @@ GameObject:
   - component: {fileID: 3168203457968765632}
   - component: {fileID: 851400780913438517}
   - component: {fileID: 5041331893958588577}
+  - component: {fileID: 6900141220502265913}
   m_Layer: 0
   m_Name: Drone
   m_TagString: Untagged
@@ -722,6 +723,20 @@ MonoBehaviour:
   registry: {fileID: 0}
   marker: {fileID: 960204617261339603}
   cameraRig: {fileID: 8781511456606682377}
+--- !u!114 &6900141220502265913
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7390716398564732747}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73ef4d908d84c0c429ac079bb5df11dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DroneC2.Runtime::DroneC2.DataSource.Mavlink.MavlinkUnitSource
+  receiver: {fileID: 0}
+  systemId: 1
 --- !u!1 &7719507119492861486
 GameObject:
   m_ObjectHideFlags: 0

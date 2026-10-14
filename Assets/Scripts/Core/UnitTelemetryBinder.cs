@@ -27,6 +27,37 @@ namespace DroneC2.Core
         UnitStateStore subscribedStore;
         string unitId;
         bool warnedMissingHome;
+        bool sourceSubscribed;
+
+        /// <summary>현재 연결된 데이터 소스. 활성화 전에는 직렬화된 값을 돌려준다.</summary>
+        public ITelemetrySource CurrentSource => source ?? sourceBehaviour as ITelemetrySource;
+
+        /// <summary>
+        /// 데이터 소스를 바꾼다(소스 전환). 이미 구독 중이면 이전 소스를 해제하고 새 소스를 구독한다.
+        /// 고도 기준은 샘플이 싣고 오므로 바인더 쪽에서 따로 맞출 것이 없다.
+        /// </summary>
+        public void SetSource(MonoBehaviour newSource)
+        {
+            if (newSource != null && !(newSource is ITelemetrySource))
+            {
+                Debug.LogError($"{newSource.name}은(는) ITelemetrySource를 구현하지 않습니다.", this);
+                return;
+            }
+
+            if (sourceSubscribed && source != null)
+                source.SampleReceived -= OnSample;
+
+            sourceBehaviour = newSource;
+            source = newSource as ITelemetrySource;
+
+            if (sourceSubscribed)
+            {
+                if (source != null)
+                    source.SampleReceived += OnSample;
+                else
+                    sourceSubscribed = false;
+            }
+        }
 
         void OnValidate()
         {
@@ -58,6 +89,7 @@ namespace DroneC2.Core
             // 변환기가 지표 높이 조회를 지원하면 고도 모드에 사용한다. (지원하지 않으면 평면으로 간주)
             altitudeResolver = new AltitudeResolver(converterBehaviour as ITerrainHeightSampler);
             source.SampleReceived += OnSample;
+            sourceSubscribed = true;
 
             if (registry != null && (marker != null || cameraRig != null))
             {
@@ -71,8 +103,9 @@ namespace DroneC2.Core
 
         void OnDisable()
         {
-            if (source != null)
+            if (sourceSubscribed && source != null)
                 source.SampleReceived -= OnSample;
+            sourceSubscribed = false;
 
             if (subscribedStore != null)
             {

@@ -382,6 +382,14 @@ PrefabInstance:
       propertyPath: converterBehaviour
       value: 
       objectReference: {fileID: 317126804}
+    - target: {fileID: 1107705175876111652, guid: ec4f9eabe99e98b47bb9b60185b78f52, type: 3}
+      propertyPath: receiver
+      value: 
+      objectReference: {fileID: 1440962822}
+    - target: {fileID: 1107705175876111652, guid: ec4f9eabe99e98b47bb9b60185b78f52, type: 3}
+      propertyPath: systemId
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 3521751848595517192, guid: ec4f9eabe99e98b47bb9b60185b78f52, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -919,6 +927,14 @@ PrefabInstance:
       propertyPath: converterBehaviour
       value: 
       objectReference: {fileID: 317126804}
+    - target: {fileID: 1107705175876111652, guid: ec4f9eabe99e98b47bb9b60185b78f52, type: 3}
+      propertyPath: receiver
+      value: 
+      objectReference: {fileID: 1440962822}
+    - target: {fileID: 1107705175876111652, guid: ec4f9eabe99e98b47bb9b60185b78f52, type: 3}
+      propertyPath: systemId
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: 3521751848595517192, guid: ec4f9eabe99e98b47bb9b60185b78f52, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1086,6 +1102,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &664674967
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 664674969}
+  - component: {fileID: 664674968}
+  m_Layer: 0
+  m_Name: TelemetrySourceSelector
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &664674968
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 664674967}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af5f14d520ee4654b8485e84439fe4f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DroneC2.Runtime::DroneC2.Core.TelemetrySourceSelector
+  mode: 0
+  receiver: {fileID: 1440962822}
+--- !u!4 &664674969
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 664674967}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &978613673
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1197,6 +1259,14 @@ PrefabInstance:
     - target: {fileID: 5931301104100025291, guid: e8501a0f0aa303443a9c4b609cb5727e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6900141220502265913, guid: e8501a0f0aa303443a9c4b609cb5727e, type: 3}
+      propertyPath: receiver
+      value: 
+      objectReference: {fileID: 1440962822}
+    - target: {fileID: 6900141220502265913, guid: e8501a0f0aa303443a9c4b609cb5727e, type: 3}
+      propertyPath: systemId
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 7390716398564732747, guid: e8501a0f0aa303443a9c4b609cb5727e, type: 3}
       propertyPath: m_Name
@@ -1442,6 +1512,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6900141220502265913, guid: e8501a0f0aa303443a9c4b609cb5727e, type: 3}
+      propertyPath: receiver
+      value: 
+      objectReference: {fileID: 1440962822}
+    - target: {fileID: 6900141220502265913, guid: e8501a0f0aa303443a9c4b609cb5727e, type: 3}
+      propertyPath: systemId
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 7390716398564732747, guid: e8501a0f0aa303443a9c4b609cb5727e, type: 3}
       propertyPath: m_Name
       value: UAV-02
@@ -1548,6 +1626,54 @@ MonoBehaviour:
   _updateInEditor: 1
   _logSelectionStats: 0
   _createPhysicsMeshes: 0
+--- !u!1 &1440962821
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1440962823}
+  - component: {fileID: 1440962822}
+  m_Layer: 0
+  m_Name: MavlinkReceiver
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1440962822
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1440962821}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81ae784106298b74f9869d4c3efed268, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DroneC2.Runtime::DroneC2.DataSource.Mavlink.MavlinkReceiver
+  port: 14560
+  table: {fileID: 11400000, guid: c3d2f0f6ae02aee45be4c2ea66f3f37b, type: 2}
+  maxQueuedFrames: 2048
+  maxFramesPerUpdate: 512
+--- !u!4 &1440962823
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1440962821}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1503370943
 GameObject:
   m_ObjectHideFlags: 0
@@ -1799,6 +1925,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6900141220502265913, guid: e8501a0f0aa303443a9c4b609cb5727e, type: 3}
+      propertyPath: receiver
+      value: 
+      objectReference: {fileID: 1440962822}
     - target: {fileID: 7390716398564732747, guid: e8501a0f0aa303443a9c4b609cb5727e, type: 3}
       propertyPath: m_Name
       value: UAV-01
@@ -1825,3 +1955,5 @@ SceneRoots:
   - {fileID: 1958214840}
   - {fileID: 2024960521}
   - {fileID: 1503370945}
+  - {fileID: 1440962823}
+  - {fileID: 664674969}
