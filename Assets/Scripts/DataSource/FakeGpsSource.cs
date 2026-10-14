@@ -34,6 +34,9 @@ namespace DroneC2.DataSource
         [SerializeField, Min(0f)] float dropoutStartSec;
         [SerializeField, Min(0f)] float dropoutDurationSec;
 
+        [Tooltip("지정하면 이 파일에서 unitId와 같은 id의 유닛 설정(경로·고도·속도·종류·결함)을 읽어 아래 값을 덮어쓴다.")]
+        [SerializeField] TextAsset scenarioJson;
+
         // 실제 시설과 무관한 공해상 가상 좌표 주변의 사각 경로 (기본값, 약 670m x 670m)
         [SerializeField] List<GeoPoint> waypoints = new List<GeoPoint>
         {
@@ -55,6 +58,12 @@ namespace DroneC2.DataSource
 
         void Start()
         {
+            if (scenarioJson != null && !ApplyScenario())
+            {
+                enabled = false;
+                return;
+            }
+
             if (waypoints.Count < 2)
             {
                 Debug.LogError("FakeGpsSource: 웨이포인트가 2개 이상 필요합니다.", this);
@@ -69,6 +78,34 @@ namespace DroneC2.DataSource
             sampleInterval = 1.0 / sampleRateHz;
             startTime = Time.timeAsDouble;
             Emit();
+        }
+
+        bool ApplyScenario()
+        {
+            if (!Scenario.TryParse(scenarioJson.text, out Scenario scenario, out string error))
+            {
+                Debug.LogError($"FakeGpsSource: {scenarioJson.name}: {error}", this);
+                return false;
+            }
+
+            if (!scenario.TryGetUnit(unitId, out ScenarioUnit unit))
+            {
+                Debug.LogError($"FakeGpsSource: {scenarioJson.name}에 유닛 '{unitId}'이(가) 없습니다.", this);
+                return false;
+            }
+
+            unitKind = unit.Kind;
+            altitudeM = unit.altitudeM;
+            speedMps = unit.speedMps;
+            warningStartSec = unit.warning.startSec;
+            warningDurationSec = unit.warning.durationSec;
+            dropoutStartSec = unit.dropout.startSec;
+            dropoutDurationSec = unit.dropout.durationSec;
+
+            waypoints = new List<GeoPoint>(unit.waypoints.Count);
+            foreach (ScenarioPoint point in unit.waypoints)
+                waypoints.Add(new GeoPoint { latitude = point.latitude, longitude = point.longitude });
+            return true;
         }
 
         void Update()

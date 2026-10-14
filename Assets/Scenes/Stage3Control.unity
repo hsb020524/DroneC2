@@ -423,6 +423,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3557405060091325441, guid: ec4f9eabe99e98b47bb9b60185b78f52, type: 3}
+      propertyPath: scenarioJson
+      value: 
+      objectReference: {fileID: 4900000, guid: 6c8a0fc54a36f0e43b79a796ce8da5d1, type: 3}
+    - target: {fileID: 3557405060091325441, guid: ec4f9eabe99e98b47bb9b60185b78f52, type: 3}
       propertyPath: waypoints.Array.size
       value: 58
       objectReference: {fileID: 0}
@@ -964,6 +968,10 @@ PrefabInstance:
       value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 3557405060091325441, guid: ec4f9eabe99e98b47bb9b60185b78f52, type: 3}
+      propertyPath: scenarioJson
+      value: 
+      objectReference: {fileID: 4900000, guid: 6c8a0fc54a36f0e43b79a796ce8da5d1, type: 3}
+    - target: {fileID: 3557405060091325441, guid: ec4f9eabe99e98b47bb9b60185b78f52, type: 3}
       propertyPath: warningStartSec
       value: 30
       objectReference: {fileID: 0}
@@ -1098,6 +1106,10 @@ PrefabInstance:
       propertyPath: altitudeM
       value: 60
       objectReference: {fileID: 0}
+    - target: {fileID: 851400780913438517, guid: e8501a0f0aa303443a9c4b609cb5727e, type: 3}
+      propertyPath: scenarioJson
+      value: 
+      objectReference: {fileID: 4900000, guid: 6c8a0fc54a36f0e43b79a796ce8da5d1, type: 3}
     - target: {fileID: 851400780913438517, guid: e8501a0f0aa303443a9c4b609cb5727e, type: 3}
       propertyPath: dropoutStartSec
       value: 60
@@ -1342,6 +1354,10 @@ PrefabInstance:
       propertyPath: altitudeM
       value: 100
       objectReference: {fileID: 0}
+    - target: {fileID: 851400780913438517, guid: e8501a0f0aa303443a9c4b609cb5727e, type: 3}
+      propertyPath: scenarioJson
+      value: 
+      objectReference: {fileID: 4900000, guid: 6c8a0fc54a36f0e43b79a796ce8da5d1, type: 3}
     - target: {fileID: 851400780913438517, guid: e8501a0f0aa303443a9c4b609cb5727e, type: 3}
       propertyPath: warningStartSec
       value: 40
@@ -1637,6 +1653,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 851400780913438517, guid: e8501a0f0aa303443a9c4b609cb5727e, type: 3}
+      propertyPath: scenarioJson
+      value: 
+      objectReference: {fileID: 4900000, guid: 6c8a0fc54a36f0e43b79a796ce8da5d1, type: 3}
     - target: {fileID: 5041331893958588577, guid: e8501a0f0aa303443a9c4b609cb5727e, type: 3}
       propertyPath: registry
       value: 
