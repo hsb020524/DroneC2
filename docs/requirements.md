@@ -152,3 +152,7 @@ DroneC2는 **Unity 기반 드론·전차 GPS 위치 및 작전 상황 3D 관제 
    - 토큰이 저장되는 `Assets/CesiumSettings/Resources/CesiumIonServers/ion.cesium.com.asset`은 `.gitignore`에 추가해 커밋하지 않는다.
    - 토큰은 채팅에 붙여넣지 않고, 사용자가 Unity의 Cesium 패널에서 직접 연결한다.
    - README에 "본인 토큰을 넣어 실행"하라는 안내를 쓴다.
+8. **MAVLink 도구의 라이선스 구분.**
+   - Unity 쪽 MAVLink 파서(`Assets/Scripts/DataSource/Mavlink/`)는 규격(프레임 형식, CRC, 메시지 정의)을 보고 직접 작성했으며 외부 라이브러리를 포함하지 않는다.
+   - 에미터(`tools/`)는 `pymavlink`(LGPL-3.0)를 쓴다. 별도 프로세스로만 실행하며 Unity 프로젝트·빌드에 포함하거나 링크하지 않는다. 가상환경은 저장소 밖(`C:\UnityProjects\DroneC2-tools\venv`)에 두고, 저장소에는 버전을 고정한 `tools/requirements.txt`만 둔다.
+   - 에미터는 UDP로 가상 텔레메트리를 보내는 전송 전용 도구이며, 수신 측(Unity)은 여전히 수신·표시만 한다.
