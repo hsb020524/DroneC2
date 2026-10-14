@@ -228,7 +228,11 @@ MonoBehaviour:
   offset: {x: 0, y: 24, z: -52}
   positionSmoothTime: 0.15
   yawSharpness: 2
+  rotationSharpness: 6
   lookHeightOffset: 4
+  overviewPosition: {x: 500, y: 1500, z: -1800}
+  overviewLookAt: {x: 500, y: -100, z: 200}
+  overviewSmoothTime: 0.8
 --- !u!1 &144880903
 GameObject:
   m_ObjectHideFlags: 0
@@ -462,7 +466,9 @@ MonoBehaviour:
   sourceBehaviour: {fileID: 317126806}
   converterBehaviour: {fileID: 317126804}
   view: {fileID: 1680943958}
-  altitudeMode: 1
+  registry: {fileID: 0}
+  marker: {fileID: 0}
+  cameraRig: {fileID: 0}
 --- !u!114 &317126806
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -480,6 +486,13 @@ MonoBehaviour:
   speedMps: 25
   sampleRateHz: 10
   arrivalRadiusM: 5
+  unitKind: 0
+  altitudeReference: 1
+  warningStartSec: 0
+  warningDurationSec: 0
+  dropoutStartSec: 0
+  dropoutDurationSec: 0
+  scenarioJson: {fileID: 0}
   waypoints:
   - latitude: 35.568400000000004
     longitude: -83.5056

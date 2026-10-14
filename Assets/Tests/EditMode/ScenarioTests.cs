@@ -112,6 +112,41 @@ namespace DroneC2.Tests
         }
 
         [Test]
+        public void AltitudeReference_DefaultsByKind_WhenAltitudeModeOmitted()
+        {
+            Scenario.TryParse(Valid, out Scenario scenario, out _);
+
+            scenario.TryGetUnit("UAV-01", out ScenarioUnit drone);
+            scenario.TryGetUnit("TNK-01", out ScenarioUnit tank);
+
+            Assert.AreEqual(AltitudeMode.AboveGround, drone.AltitudeReference);
+            Assert.AreEqual(AltitudeMode.ClampToGround, tank.AltitudeReference);
+        }
+
+        [Test]
+        public void AltitudeReference_ExplicitValue_Wins()
+        {
+            string unit = "{\"id\":\"A\",\"altitudeMode\":\"Absolute\",\"speedMps\":5,"
+                + "\"waypoints\":[{\"latitude\":1,\"longitude\":1},{\"latitude\":1,\"longitude\":2}]}";
+
+            Assert.IsTrue(Scenario.TryParse(WithUnit(unit), out Scenario scenario, out string error), error);
+            scenario.TryGetUnit("A", out ScenarioUnit parsed);
+            Assert.AreEqual(AltitudeMode.Absolute, parsed.AltitudeReference);
+        }
+
+        [TestCase("HomeRelative")]
+        [TestCase("Sideways")]
+        [TestCase("9")]
+        public void TryParse_InvalidAltitudeMode_Fails(string mode)
+        {
+            string unit = "{\"id\":\"A\",\"altitudeMode\":\"" + mode + "\",\"speedMps\":5,"
+                + "\"waypoints\":[{\"latitude\":1,\"longitude\":1},{\"latitude\":1,\"longitude\":2}]}";
+
+            Assert.IsFalse(Scenario.TryParse(WithUnit(unit), out _, out string error));
+            StringAssert.Contains("고도 모드", error);
+        }
+
+        [Test]
         public void TryParse_LatitudeOutOfRange_Fails()
         {
             string unit = "{\"id\":\"A\",\"speedMps\":5,\"waypoints\":[{\"latitude\":91,\"longitude\":1},{\"latitude\":1,\"longitude\":2}]}";

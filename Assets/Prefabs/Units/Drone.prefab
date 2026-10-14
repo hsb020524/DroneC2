@@ -689,6 +689,7 @@ MonoBehaviour:
   sampleRateHz: 10
   arrivalRadiusM: 5
   unitKind: 0
+  altitudeReference: 1
   warningStartSec: 0
   warningDurationSec: 0
   dropoutStartSec: 0
@@ -718,7 +719,6 @@ MonoBehaviour:
   sourceBehaviour: {fileID: 851400780913438517}
   converterBehaviour: {fileID: 0}
   view: {fileID: 3168203457968765632}
-  altitudeMode: 1
   registry: {fileID: 0}
   marker: {fileID: 960204617261339603}
   cameraRig: {fileID: 8781511456606682377}

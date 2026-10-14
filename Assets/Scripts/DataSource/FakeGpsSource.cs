@@ -27,6 +27,9 @@ namespace DroneC2.DataSource
         [SerializeField, Min(0.1f)] float arrivalRadiusM = 5f;
         [SerializeField] UnitKind unitKind = UnitKind.Drone;
 
+        [Tooltip("altitudeM의 기준. 샘플에 실려 가며 바인더가 이 기준대로 해석한다. 시나리오를 쓰면 시나리오 값이 덮어쓴다.")]
+        [SerializeField] AltitudeMode altitudeReference = AltitudeMode.Absolute;
+
         // 시연용 결함 주입. 지속 시간이 0이면 해당 결함을 쓰지 않는다. 시각은 소스 시작 후 경과 시간(초).
         [Header("결함 주입 (시연용)")]
         [SerializeField, Min(0f)] float warningStartSec;
@@ -96,6 +99,7 @@ namespace DroneC2.DataSource
 
             unitKind = unit.Kind;
             altitudeM = unit.altitudeM;
+            altitudeReference = unit.AltitudeReference;
             speedMps = unit.speedMps;
             warningStartSec = unit.warning.startSec;
             warningDurationSec = unit.warning.durationSec;
@@ -175,7 +179,7 @@ namespace DroneC2.DataSource
 
             double heading = (headingDeg + 360.0) % 360.0;
             SampleReceived?.Invoke(new TelemetrySample(
-                unitId, latitude, longitude, altitudeM, AltitudeMode.Absolute, heading, speedMps,
+                unitId, latitude, longitude, altitudeM, altitudeReference, heading, speedMps,
                 Time.timeAsDouble, unitKind, status));
         }
 

@@ -27,17 +27,33 @@ namespace DroneC2.DataSource
         public string id;
         public string kind = "Drone";
         public double altitudeM;
+
+        /// <summary>
+        /// 고도 기준(<see cref="AltitudeMode"/> 이름: Absolute, AboveGround, ClampToGround).
+        /// 비워 두면 종류로 정한다(드론 AboveGround, 전차 ClampToGround). HomeRelative는 홈을 모르므로 쓸 수 없다.
+        /// </summary>
+        public string altitudeMode = "";
         public float speedMps = 10f;
         public List<ScenarioPoint> waypoints = new List<ScenarioPoint>();
         public ScenarioFault warning = new ScenarioFault();
         public ScenarioFault dropout = new ScenarioFault();
 
         public UnitKind Kind => Enum.TryParse(kind, out UnitKind parsed) ? parsed : UnitKind.Drone;
+
+        public AltitudeMode AltitudeReference
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(altitudeMode) && Enum.TryParse(altitudeMode, out AltitudeMode parsed))
+                    return parsed;
+                return Kind == UnitKind.Tank ? AltitudeMode.ClampToGround : AltitudeMode.AboveGround;
+            }
+        }
     }
 
     /// <summary>
     /// 웨이포인트 기반 시나리오 파일(JSON). 같은 파일이면 같은 이동을 재현한다. (NFR-004)
-    /// 위경도·고도·속도만 담으며 Unity 좌표나 고도 모드는 알지 못한다. 고도 모드는 바인더 설정이다.
+    /// 위경도·고도·속도와 고도 기준 이름만 담으며 Unity 좌표는 알지 못한다. 고도 기준은 소스가 샘플에 실어 보낸다.
     /// </summary>
     [Serializable]
     public class Scenario
@@ -117,6 +133,15 @@ namespace DroneC2.DataSource
             if (!Enum.TryParse(unit.kind, out UnitKind _))
             {
                 error = $"{unit.id}: 알 수 없는 종류 '{unit.kind}' (Drone, Tank)";
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(unit.altitudeMode)
+                && (!Enum.TryParse(unit.altitudeMode, out AltitudeMode mode)
+                    || !Enum.IsDefined(typeof(AltitudeMode), mode)
+                    || mode == AltitudeMode.HomeRelative))
+            {
+                error = $"{unit.id}: 알 수 없는 고도 모드 '{unit.altitudeMode}' (Absolute, AboveGround, ClampToGround)";
                 return false;
             }
 

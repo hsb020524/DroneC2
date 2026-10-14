@@ -91,8 +91,7 @@ namespace DroneC2.Core
             return byId.TryGetValue(id, out state);
         }
 
-        public void Report(in TelemetrySample sample, Vector3 worldPosition, double now,
-            AltitudeMode altitudeMode = AltitudeMode.Absolute)
+        public void Report(in TelemetrySample sample, Vector3 worldPosition, double now)
         {
             if (string.IsNullOrEmpty(sample.UnitId))
                 return;
@@ -116,7 +115,7 @@ namespace DroneC2.Core
             state.Latitude = sample.Latitude;
             state.Longitude = sample.Longitude;
             state.AltitudeM = sample.AltitudeM;
-            state.AltitudeMode = altitudeMode;
+            state.AltitudeMode = sample.AltitudeReference;
             state.SpeedMps = sample.SpeedMps;
             state.HeadingDeg = sample.HeadingDeg;
             state.WorldPosition = worldPosition;

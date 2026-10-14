@@ -9,9 +9,10 @@ namespace DroneC2.Tests
     public class UnitStateStoreTests
     {
         static TelemetrySample Sample(string id, UnitKind kind = UnitKind.Drone,
-            ReportedStatus status = ReportedStatus.Normal, double lat = 35.0, double speed = 10.0)
+            ReportedStatus status = ReportedStatus.Normal, double lat = 35.0, double speed = 10.0,
+            AltitudeMode altitude = AltitudeMode.Absolute)
         {
-            return new TelemetrySample(id, lat, -83.0, 80.0, AltitudeMode.Absolute, 90.0, speed, 0.0, kind, status);
+            return new TelemetrySample(id, lat, -83.0, 80.0, altitude, 90.0, speed, 0.0, kind, status);
         }
 
         [Test]
@@ -43,15 +44,15 @@ namespace DroneC2.Tests
         }
 
         [Test]
-        public void Report_StoresAltitudeMode_DefaultsToAbsolute()
+        public void Report_StoresAltitudeModeFromSample()
         {
             var store = new UnitStateStore();
-            store.Report(Sample("UAV-01"), Vector3.zero, 0.0);
-            store.Report(Sample("TNK-01", UnitKind.Tank), Vector3.zero, 0.0, AltitudeMode.ClampToGround);
+            store.Report(Sample("UAV-01", altitude: AltitudeMode.HomeRelative), Vector3.zero, 0.0);
+            store.Report(Sample("TNK-01", UnitKind.Tank, altitude: AltitudeMode.ClampToGround), Vector3.zero, 0.0);
 
             store.TryGet("UAV-01", out UnitState drone);
             store.TryGet("TNK-01", out UnitState tank);
-            Assert.AreEqual(AltitudeMode.Absolute, drone.AltitudeMode);
+            Assert.AreEqual(AltitudeMode.HomeRelative, drone.AltitudeMode);
             Assert.AreEqual(AltitudeMode.ClampToGround, tank.AltitudeMode);
         }
 

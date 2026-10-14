@@ -14,7 +14,6 @@ namespace DroneC2.Core
         [SerializeField] MonoBehaviour sourceBehaviour;
         [SerializeField] MonoBehaviour converterBehaviour;
         [SerializeField] DroneView view;
-        [SerializeField] AltitudeMode altitudeMode = AltitudeMode.Absolute;
         [Tooltip("비워 두면 레지스트리에 보고하지 않는다. (단일 유닛 씬)")]
         [SerializeField] UnitRegistry registry;
         [Tooltip("비워 두면 마커를 갱신하지 않는다. 레지스트리가 있어야 상태가 반영된다.")]
@@ -27,6 +26,7 @@ namespace DroneC2.Core
         AltitudeResolver altitudeResolver;
         UnitStateStore subscribedStore;
         string unitId;
+        bool warnedMissingHome;
 
         void OnValidate()
         {
@@ -86,9 +86,22 @@ namespace DroneC2.Core
 
         void OnSample(TelemetrySample sample)
         {
+            // 고도 기준은 샘플이 선언한다. 홈 기준인데 홈 위치가 없으면 해석할 수 없으므로 버리고,
+            // 경고는 유닛당 한 번만 낸다.
+            if (sample.AltitudeReference == AltitudeMode.HomeRelative && !sample.HasHome)
+            {
+                if (!warnedMissingHome)
+                {
+                    warnedMissingHome = true;
+                    Debug.LogWarning($"UnitTelemetryBinder: {sample.UnitId}의 샘플이 HomeRelative인데 "
+                        + "홈 위경도가 없어 버립니다.", this);
+                }
+                return;
+            }
+
             // 지표 높이를 아직 얻지 못했으면 이 샘플은 건너뛴다. (지형 속에 배치하지 않기 위해)
-            if (!altitudeResolver.TryResolve(altitudeMode, sample.Latitude, sample.Longitude,
-                    sample.AltitudeM, out double altitudeM))
+            if (!altitudeResolver.TryResolve(sample.AltitudeReference, sample.Latitude, sample.Longitude,
+                    sample.AltitudeM, sample.HomeLatitude, sample.HomeLongitude, out double altitudeM))
                 return;
 
             Vector3 position = converter.ToWorld(sample.Latitude, sample.Longitude, altitudeM);
@@ -107,7 +120,7 @@ namespace DroneC2.Core
                     registry.RegisterCameraTexture(unitId, cameraRig.Texture);
             }
 
-            registry.Store.Report(sample, position, Time.timeAsDouble, altitudeMode);
+            registry.Store.Report(sample, position, Time.timeAsDouble);
         }
 
         void OnUnitState(UnitState state)
