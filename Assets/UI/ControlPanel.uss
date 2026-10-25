@@ -16,19 +16,20 @@
 }
 
 /* 데이터 소스 표시줄: 화면 위 가운데에 항상 표시한다. 가상 데이터와 수신 데이터를 혼동하지 않게 한다. */
+/* 좌우 패널(왼쪽 목록 약 440px, 오른쪽 상세 약 640px) 사이의 빈 영역에 둔다. 문구가 길어져도 패널과 겹치지 않게 한다. */
 .source-bar {
     position: absolute;
-    left: 0;
-    right: 0;
+    left: 480px;
+    right: 680px;
     top: 14px;
     flex-direction: row;
     justify-content: center;
 }
 
 .source-status {
-    font-size: 24px;
+    font-size: 18px;
     -unity-font-style: bold;
-    padding: 6px 18px;
+    padding: 6px 14px;
     border-radius: 8px;
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.2);

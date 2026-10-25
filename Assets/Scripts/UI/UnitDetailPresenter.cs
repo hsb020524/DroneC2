@@ -29,7 +29,6 @@ namespace DroneC2.UI
         Label altitude;
         Label speed;
         Label heading;
-        UnitStatus appliedStatus = (UnitStatus)(-1);
         bool started;
 
         void Start()
@@ -133,14 +132,24 @@ namespace DroneC2.UI
 
         void ApplyStatus(UnitStatus value)
         {
-            if (appliedStatus == value)
-                return;
+            ApplyStatusTo(status, value);
+        }
 
-            appliedStatus = value;
-            status.text = UnitFormat.StatusLabel(value);
-            status.EnableInClassList("status-normal", value == UnitStatus.Normal);
-            status.EnableInClassList("status-warning", value == UnitStatus.Warning);
-            status.EnableInClassList("status-lost", value == UnitStatus.Lost);
+        /// <summary>
+        /// 라벨이 실제로 가진 텍스트를 기준으로 갱신한다. 이전에 적용한 값을 따로 기억하면
+        /// UXML 재적용 등으로 라벨이 외부에서 초기화됐을 때 복구되지 않기 때문이다. 쓴 경우 true.
+        /// </summary>
+        public static bool ApplyStatusTo(Label label, UnitStatus value)
+        {
+            string text = UnitFormat.StatusLabel(value);
+            if (label.text == text)
+                return false;
+
+            label.text = text;
+            label.EnableInClassList("status-normal", value == UnitStatus.Normal);
+            label.EnableInClassList("status-warning", value == UnitStatus.Warning);
+            label.EnableInClassList("status-lost", value == UnitStatus.Lost);
+            return true;
         }
     }
 }
