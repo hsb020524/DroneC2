@@ -1,7 +1,7 @@
 # DroneC2 시스템 구조
 
-- 버전: v0.5 (초안)
-- 상태: 4단계 구현 반영 — 5단계 이후 클래스명·버전은 예정 사항이며 구현 중 변경될 수 있다.
+- 버전: v0.6 (초안)
+- 상태: 5단계 구현 반영 — 6단계 이후 클래스명·버전은 예정 사항이며 구현 중 변경될 수 있다.
 
 ## 1. 설계 원칙
 
@@ -78,7 +78,7 @@ sequenceDiagram
 | 2 (완료) | 동일 | Cesium 지오레퍼런스 + 지표 높이 조회 | 실제 지형 위 유닛 (표시 계층 변경 없음) |
 | 3 (완료) | 다중 유닛 가짜 GPS(드론 3·전차 2, 결함 주입) | 동일 (변환기 하나를 모든 유닛이 공유) | 다중 유닛 + 마커 + 관제 UI(목록·상세) |
 | 4 (완료) | 동일 + 시나리오 JSON 로딩 | 동일 | + 유닛 가상 카메라와 카메라 패널(선택·고정) |
-| 5 | + MAVLink 시뮬레이터 | 동일 | 동일 (소스 전환만 변경) |
+| 5 (완료) | + MAVLink 시뮬레이터(UDP 수신, sysid별 소스). 시작 시 설정으로 가짜 GPS와 전환 | 동일 (`HomeRelative` 고도 모드만 추가) | 동일 (수신 전 유닛 숨김, 데이터 소스 표시줄 추가) |
 
 ## 5. 계층별 책임
 
@@ -88,7 +88,7 @@ sequenceDiagram
 | 좌표 변환 | WGS84 ↔ Unity 월드 좌표 변환, 지형 고도 보정 | 데이터 생성, UI 처리 |
 | 표시 | 유닛·경로·UI·카메라 패널 렌더링 | 데이터 소스 종류 판별, 좌표 계산 |
 
-> 주의: 5단계 MAVLink 수신은 별도 스레드에서 이뤄질 수 있으므로, 데이터 소스에서 표시 계층으로 넘길 때 메인 스레드 전달(큐 등)이 필요하다. (구현은 5단계)
+> 5단계 MAVLink 수신은 별도 스레드에서 이뤄지므로 데이터 소스에서 표시 계층으로 넘길 때 메인 스레드 전달(상한 있는 큐)을 거친다.
 
 ## 6. 1단계 구현 현황
 
@@ -101,7 +101,7 @@ sequenceDiagram
 | 표시 | `DroneView`, `PathTrail`, `FollowCamera` | 보간 이동·회전, 경로선, 뒤·위 추적 카메라 (월드 좌표만 사용) |
 | 연결 | `UnitTelemetryBinder` | 소스 → 변환기 → 뷰를 잇는 유일한 지점 |
 
-2단계에서는 `ICoordinateConverter`(Cesium) 구현체를 추가하고 표시·데이터 소스 계층은 수정하지 않았다. 5단계에서도 `ITelemetrySource`(MAVLink) 구현체만 추가·교체하는 것을 목표로 한다.
+2단계에서는 `ICoordinateConverter`(Cesium) 구현체를 추가하고 표시·데이터 소스 계층은 수정하지 않았다. 5단계에서도 `ITelemetrySource`(MAVLink) 구현체(`MavlinkUnitSource`)만 추가했고 표시 코드는 소스 교체 때문에 고치지 않았다.
 
 ## 7. 2단계 구현 현황
 
@@ -163,7 +163,7 @@ flowchart LR
 
 - 계층 의존은 단방향이다: DataSource는 Core를 참조하지 않고, Core·View·UI가 DataSource 타입을 참조한다.
 - 선택 상태는 `UnitStateStore.Select` 한 곳에만 있어 목록 클릭, 마커 강조, 카메라 추적이 같은 경로를 탄다.
-- 두절은 "샘플이 오지 않음"을 시간으로 판정한다. 소스용(Normal/Warning)과 표시용(+Lost) enum 분리는 5단계에서 재검토한다.
+- 두절은 "샘플이 오지 않음"을 시간으로 판정한다. 소스용(`ReportedStatus`: Normal/Warning)과 표시용(`UnitStatus`: +Lost) enum은 5단계에서 분리했다.
 
 ### 한계
 
@@ -202,7 +202,44 @@ flowchart LR
 - 카메라를 Cesium에 등록하면 타일·메모리가 늘고, 등록 직후 로딩 구간에 정지가 한 번 관측됐다(2대, 262ms).
 - 시나리오는 시작 시점에 한 번 읽어 적용한다. 고도 모드는 시나리오에 없고 바인더 설정이다.
 
-## 10. 범위와 보안
+## 10. 5단계 구현 현황
+
+| 계층 | 구성 요소 | 역할 |
+|---|---|---|
+| 데이터 소스 | `MavlinkParser`, `MavlinkDecoder`, `MavlinkFrame` | v1·v2 프레임 추출(CRC·잘린 v2 페이로드·서명 길이). HEARTBEAT·GLOBAL_POSITION_INT만 해석. 사유별 카운터: `V1Frames`/`V2Frames`, `Unsupported`(정상 미지원 메시지), `Corrupted`(`Truncated`/`BadFlags`/`BadLength`/`BadCrc`), `Rejected`(합계) |
+| 데이터 소스 | `MavlinkUdpListener`, `MavlinkReceiver` | 루프백 UDP 수신 스레드와 상한 있는 큐(드롭 카운트), 메인 스레드 `Update`에서 큐를 비움. 송신 없음 |
+| 데이터 소스 | `MavlinkTelemetryRouter`, `MavlinkUnitTable`, `MavlinkUnitSource` | sysid → 유닛 조회(테이블 밖은 `UnknownSysid`), 상태·방위·고도 의미 결정, sysid별 `ITelemetrySource` |
+| 데이터 소스 | `ReportedStatus`, `AltitudeMode.HomeRelative`, `TelemetrySample.AltitudeReference` | 소스 보고 상태와 표시 상태 분리, 고도 기준을 샘플이 싣고 옴(필수 인자) |
+| 연결 | `TelemetrySourceSelector`, `UnitTelemetryBinder.SetSource`, `AltitudeResolver` | 시작 시 소스 전환. `HomeRelative`는 샘플이 싣고 온 홈 위경도의 지형 높이(홈이 바뀔 때만 재조회) + 상대고도 |
+| 표시 | `DroneView` | 첫 목표 전에는 자식 렌더러(모델·마커·경로선)를 숨김 |
+| UI | `DataSourceStatusPresenter`, `DataSourceStatusFormat` | 상단 표시줄: 가상 GPS(시뮬레이션) / `MAVLink · 127.0.0.1:14560 · 수신 N / 손상 M (미지원 K)` / 수신기 없음 |
+
+```mermaid
+flowchart LR
+    SITL["ArduPilot SITL / 에미터<br/>(UDP, 별도 프로세스)"] -- "MAVLink v1·v2" --> L["MavlinkUdpListener<br/>수신 스레드·큐"]
+    L --> RCV["MavlinkReceiver<br/>(메인 스레드)"]
+    RCV --> RT["MavlinkTelemetryRouter<br/>sysid 조회·상태·고도 의미"]
+    RT --> SRC["MavlinkUnitSource × N<br/>(ITelemetrySource)"]
+    FAKE["FakeGpsSource × N"] --> B
+    SRC --> B["UnitTelemetryBinder × N"]
+    SEL["TelemetrySourceSelector<br/>(시작 시 설정)"] -. "SetSource" .-> B
+    B -- "HomeRelative: 홈 지형 높이 + relative_alt" --> R["AltitudeResolver"]
+    B --> V["DroneView / UnitRegistry"]
+```
+
+- 수신기는 Coordinate 계층을 모른다. 라우터는 고도의 "의미"(`AltitudeMode`)와 홈 위경도만 샘플에 싣고, 지형 높이 조회는 바인더가 한다. 소스·변환기·뷰가 만나는 곳은 여전히 바인더 하나다.
+- `GLOBAL_POSITION_INT.alt`(MSL)는 쓰지 않는다. 지형 기준의 타원체고와 약 30m 달라서 `relative_alt`와 홈 지형 높이로 고도를 정한다.
+- MAVLink 모드에서 수신기가 없으면 가짜 GPS로 대체하지 않는다. 오류를 출력하고 모드를 유지해 데이터가 오지 않게 한다.
+- 수신·표시 전용이다. 유닛에 요청이나 명령을 보내지 않으며 스트림 설정은 송신 측(SITL 파라미터)에서 한다.
+
+### 한계
+
+- **소스 전환은 Play 시작 전 설정 기준**이다. 전환 시 스토어·목록을 초기화하지 않아 Play 중 전환하면 이전 소스의 유닛이 두절로 남는다(6단계 후보).
+- 지원 메시지는 HEARTBEAT·GLOBAL_POSITION_INT뿐이다. 미지원 메시지의 헤더는 CRC를 검증하지 못한다(CRC_EXTRA를 모름).
+- 지상 유닛은 샘플러 높이와 렌더된 LOD 메시의 차이로 약 ±4m 뜨거나 파묻혀 보일 수 있다.
+- 한 번도 수신하지 못한 유닛은 목록에 없다(첫 샘플에서 등록). 테이블 기반 사전 등록은 미구현이다.
+
+## 11. 범위와 보안
 
 수신·표시 전용 구조이며 유닛에 명령을 보내는 경로는 없다. 모든 데이터는 가상·공개 데이터다.
 자세한 내용은 [requirements.md](requirements.md)의 5, 6절을 참고한다.

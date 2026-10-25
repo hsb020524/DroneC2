@@ -2,9 +2,9 @@
 
 드론·전차의 GPS 위치와 작전 상황을 3D 지형 위에서 보여주는 관제 시스템 포트폴리오 프로젝트입니다. Unity로 만들며, 모든 데이터는 가상 값과 공개 지형 데이터입니다. 수신·표시 전용이며 유닛에 명령을 보내는 경로는 없습니다.
 
-![4단계: 선택한 유닛과 고정한 유닛의 카메라 패널이 함께 보이는 화면](docs/images/stage4-camera-panel.gif)
+![5단계: ArduPilot SITL 드론이 MAVLink로 이동하는 모습과 상단 데이터 소스 표시줄](docs/images/stage5-mavlink-sitl.gif)
 
-*4단계 결과(15초). 유닛을 선택하면 해당 유닛의 가상 카메라 영상이 패널에 뜨고, 다른 유닛을 선택해도 고정한 유닛의 영상은 유지됩니다.*
+*5단계 결과(약 13초). Mission Planner의 ArduPilot SITL 드론을 MAVLink로 받아 지형 위에서 움직입니다. 상단 표시줄이 현재 데이터 소스와 `수신 / 손상 (미지원)` 카운터를 항상 보여 줍니다.*
 
 ## 진행 상황
 
@@ -14,7 +14,7 @@
 | 2 | Cesium 실제 지형 위 이동, 지표 기준 고도 | 완료 |
 | 3 | 다중 유닛(드론 3·전차 2) + 관제 UI | 완료 |
 | 4 | 카메라 패널(선택·고정 2개), 시나리오 JSON | 완료 |
-| 5 | MAVLink 시뮬레이터 연동 | 예정 |
+| 5 | MAVLink 시뮬레이터 연동(ArduPilot SITL), 데이터 소스 전환 | 완료 |
 
 ### 1단계 — 평면 위 가짜 GPS
 
@@ -40,6 +40,12 @@ Cesium World Terrain 위에 위경도 기준으로 드론을 배치하고, 지�
 
 ![4단계 결과 GIF](docs/images/stage4-camera-panel.gif)
 
+### 5단계 — MAVLink 시뮬레이터 연동
+
+ArduPilot SITL(Mission Planner)이 보내는 MAVLink v1·v2 텔레메트리를 UDP로 받아 유닛을 움직입니다. 수신 전용이며 요청이나 명령을 보내지 않습니다. 데이터 소스는 설정으로 가상 GPS와 MAVLink 사이를 전환하고(Play 시작 전 설정 기준), MAVLink 모드에서는 가짜 GPS로 대체하지 않으며, 수신하지 못한 유닛은 화면에도 나타나지 않습니다. 고도는 홈 기준(`relative_alt`)에 홈 지형 높이를 더해 지형 위에 놓습니다.
+
+![5단계 결과 스크린샷](docs/images/stage5-mavlink-sitl.png)
+
 단계별 구현·검증·겪은 문제는 [docs/devlog.md](docs/devlog.md)에 정리했습니다.
 
 ## 기술 스택
@@ -49,7 +55,7 @@ Cesium World Terrain 위에 위경도 기준으로 드론을 배치하고, 지�
 | 엔진 | Unity `6000.6.5f1`, URP 17.6.0, Input System 1.20.0 |
 | 지형 | Cesium for Unity 1.26.0, Cesium World Terrain, Bing Maps Aerial (Cesium ion) |
 | UI | UI Toolkit (런타임 UIDocument, UXML/USS) |
-| 테스트 | Unity Test Framework 1.8.0 (EditMode 150건) |
+| 테스트 | Unity Test Framework 1.8.0 (EditMode 162건) |
 | 개발 도구 | Claude Code, MCP for Unity |
 | 언어 | C# |
 
@@ -59,7 +65,7 @@ Cesium World Terrain 위에 위경도 기준으로 드론을 배치하고, 지�
 
 ```mermaid
 flowchart LR
-    SRC["데이터 소스<br/>ITelemetrySource<br/>FakeGpsSource (MAVLink 예정)"] --> BIND["UnitTelemetryBinder<br/>(유일한 연결 지점)"]
+    SRC["데이터 소스<br/>ITelemetrySource<br/>FakeGpsSource / MavlinkUnitSource"] --> BIND["UnitTelemetryBinder<br/>(유일한 연결 지점)"]
     BIND --> CONV["좌표 변환<br/>ICoordinateConverter<br/>평면 근사 / Cesium 지오레퍼런스"]
     CONV --> VIEW["표시<br/>DroneView, PathTrail, UnitMarker, FollowCamera"]
     CONV -. "ITerrainHeightSampler" .-> BIND
@@ -112,9 +118,9 @@ flowchart LR
 
 2단계와 같은 방법으로 토큰을 연결한 뒤 `Assets/Scenes/Stage3Control.unity`를 열고 Play합니다. 왼쪽 목록에서 유닛을 클릭하면 카메라가 따라가고, `전체 보기` 버튼이나 Esc로 선택을 해제합니다. 유닛 중 일부는 시연용으로 일정 시각에 경고 또는 통신 두절 상태가 됩니다. 4단계부터 같은 씬에서 선택한 유닛의 카메라 패널이 오른쪽 아래에 나타나고, `고정` 버튼으로 왼쪽 아래 패널에 유닛 하나를 남길 수 있습니다.
 
-### 5. MAVLink 모드 (5단계, 진행 중)
+### 5. MAVLink 모드 (5단계)
 
-기본은 가상 GPS(시뮬레이션)입니다. 화면 위 가운데의 표시줄이 현재 데이터 소스와 수신 상태를 항상 보여 줍니다. MAVLink로 바꾸려면 `Stage3Control` 씬의 `TelemetrySourceSelector`에서 Mode를 `Mavlink`로 바꾸고 Play합니다. 이때 수신기(`MavlinkReceiver`)가 `127.0.0.1:14560`(UDP)에서 수신만 합니다. 유닛에 명령을 보내지 않습니다.
+기본은 가상 GPS(시뮬레이션)입니다. 화면 위 가운데의 표시줄이 현재 데이터 소스와 수신 상태를 항상 보여 줍니다. MAVLink로 바꾸려면 `Stage3Control` 씬의 `TelemetrySourceSelector`에서 Mode를 `Mavlink`로 바꾼 뒤 Play합니다. **소스 전환은 Play 시작 전 설정 기준**입니다. Play 중에 바꾸면 이전 소스가 등록한 유닛이 목록에 두절로 남을 수 있습니다(알려진 한계). 이때 수신기(`MavlinkReceiver`)가 `127.0.0.1:14560`(UDP)에서 수신만 합니다. 유닛에 명령을 보내지 않습니다.
 
 데이터를 보내는 가상 에미터는 Python 도구이며 `pymavlink`(LGPL-3.0)를 별도 프로세스로만 씁니다. 가상환경은 저장소 밖에 만듭니다.
 
@@ -131,7 +137,15 @@ C:\UnityProjects\DroneC2-tools\venv\Scripts\python.exe tools/mavlink_emitter.py 
 - sysid와 유닛 id, 홈 위치는 `Assets/Config/MavlinkUnits.asset`의 테이블이 정하고, 에미터는 같은 값(UAV-01~03 = 1~3, TNK-01~02 = 4~5, 홈 35.563°N 83.499°W)을 씁니다.
 - 가상환경을 지우려면 `C:\UnityProjects\DroneC2-tools\venv` 폴더를 삭제하면 됩니다(약 110MB).
 
-#### Mission Planner(SITL 시연용, 선택) 설치와 제거
+#### SITL로 연결하기 (Mission Planner, 선택)
+
+에미터 대신 실제 ArduPilot SITL을 연결하려면 Mission Planner의 SIMULATION 탭을 씁니다. 5단계에서는 ArduCopter 4.7.2로 확인했습니다. Mission Planner의 MAVLink 포워딩(UDP 출력)은 이 환경에서 오류가 나서 쓰지 않고, SITL이 Unity로 직접 보내게 했습니다.
+
+1. SIMULATION 탭의 **Extra command line**에 `--home=35.563,-83.499,2022,0 --serial1=udpclient:127.0.0.1:14560`을 넣고 Multirotor → Stable로 시작합니다.
+2. CONFIG → Full Parameter List에서 `SERIAL1_PROTOCOL`=2, `MAV2_POSITION`=4를 씁니다. 4.7에서는 스트림 설정 이름이 `SRn_*`가 아니라 `MAVn_*`이고 번호가 1부터라 `MAV2`가 SERIAL1입니다. **이 설정은 부팅할 때 적용되므로 쓴 뒤 SITL을 재시작해야 합니다.** 재시작 전에는 HEARTBEAT만 와서 유닛이 나타나지 않습니다.
+3. Unity에서 모드를 `Mavlink`로 바꾸고 Play하면 UAV-01(sysid 1)이 나타납니다. Guided → Arm → Takeoff, "이곳으로 비행"으로 움직일 수 있습니다.
+
+#### Mission Planner 설치와 제거
 
 실제 시뮬레이터(ArduPilot SITL) 연동을 확인하려면 [Mission Planner](https://ardupilot.org/planner/docs/mission-planner-installation.html)를 씁니다. 5단계 개발에서는 1.3.83을 사용했습니다. 에미터만으로도 MAVLink 모드는 확인할 수 있어 필수가 아닙니다.
 
@@ -152,7 +166,7 @@ C:\UnityProjects\DroneC2-tools\venv\Scripts\python.exe tools/mavlink_emitter.py 
 
 ### 6. 테스트
 
-Unity의 Test Runner(`Window > General > Test Runner`)에서 EditMode를 실행합니다. 150건이 모두 통과해야 합니다.
+Unity의 Test Runner(`Window > General > Test Runner`)에서 EditMode를 실행합니다. 162건이 모두 통과해야 합니다.
 
 ## 개발 방식
 
