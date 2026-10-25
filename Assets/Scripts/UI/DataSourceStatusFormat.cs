@@ -35,7 +35,7 @@ namespace DroneC2.UI
     public static class DataSourceStatusFormat
     {
         public static DataSourceStatus Describe(TelemetrySourceMode mode, bool hasReceiver, bool listening,
-            int port, long receivedFrames, long rejectedFrames, long unknownSysid)
+            int port, long receivedFrames, long corruptedFrames, long unsupportedFrames, long unknownSysid)
         {
             if (mode == TelemetrySourceMode.FakeGps)
                 return new DataSourceStatus("데이터 소스: 가상 GPS(시뮬레이션)", DataSourceTone.Simulated);
@@ -46,8 +46,10 @@ namespace DroneC2.UI
             if (!listening)
                 return new DataSourceStatus("데이터 소스: MAVLink · 수신기 꺼짐(소켓 없음)", DataSourceTone.Error);
 
+            // 손상은 오류 신호지만 미지원(해석하지 않는 메시지)은 정상 트래픽이다. 괄호로 구분해 오해를 막는다.
             string text = string.Format(CultureInfo.InvariantCulture,
-                "데이터 소스: MAVLink · 127.0.0.1:{0} · 수신 {1} / 거부 {2}", port, receivedFrames, rejectedFrames);
+                "데이터 소스: MAVLink · 127.0.0.1:{0} · 수신 {1} / 손상 {2} (미지원 {3})",
+                port, receivedFrames, corruptedFrames, unsupportedFrames);
             if (unknownSysid > 0)
                 text += string.Format(CultureInfo.InvariantCulture, " · 미등록 sysid {0}", unknownSysid);
             return new DataSourceStatus(text, DataSourceTone.Mavlink);

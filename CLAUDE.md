@@ -30,9 +30,10 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
   - 씬이 참조하는 `ionServer` GUID는 무시된 `.asset`에 묶여 있어 다른 환경에서는 참조가 비어 있을 수 있다. 새 환경에서는 Cesium 패널에서 토큰을 연결한 뒤 씬을 열어 확인한다.
 - 5단계 진행(계획: 5-A 상태 enum 분리 → 5-B 파서 → 5-C 수신기 → 5-D 전환 → 5-E 에미터 → 5-F SITL 1기 → 5-G 문서). 완료: 5-A, 5-B, 5-C, 5-D, 5-E(테스트 150건 통과). 5-F: Mission Planner 설치 완료, SITL 실행·MAVLink Mirror 설정부터 재개(설치 1.3.83, Unity 수신기는 아직 SITL 데이터를 받지 못함 — 절차: SIMULATION 탭 Extra command line `--home=35.563,-83.499,2022,0` → Multirotor → Stable, Ctrl+F → Mavlink Mirror UDP Client `127.0.0.1:14560` 쓰기 권한 끔; Unity는 `TelemetrySourceSelector` 모드를 Mavlink로 바꿔 Play, 씬 저장본은 FakeGps). 남음: 5-F(재개), 5-G(문서·GIF·`stage-5` 태그, push는 사용자 확인 후). 계획 파일은 사용자 홈의 `.claude/plans/5-mellow-sparrow.md`.
   - 5-F 진행 기록(2026-10-25): SITL(ArduCopter 4.7.2)에 `--serial1=udpclient:127.0.0.1:14560`을 주면 Mission Planner 없이 Unity로 직접 들어온다(Mirror의 "MAVLink 직렬 출력" 표는 UDP 출력에서 NullReference 오류). 4.7.2에서는 스트림 파라미터가 `MAVn_POSITION`(MAV2 = SERIAL1)이고 **부팅 때 적용되므로 쓴 뒤 SITL을 재시작해야 한다**(재시작 전에는 HEARTBEAT만 와서 샘플 0). 지상 측정: v1 0/v2만, UAV-01이 홈 35.563/-83.499, HomeRelative, 지표 위 약 −0.01m(샘플러 기준), MAV_TYPE 불일치 경고 없음. 30m 이륙(Guided→Arm→Takeoff 30) 후 relAlt 30.00, 월드 높이가 `홈 지형 + 상대고도`와 0.00m 차이(샘플러 기준이라 메시 독립 검증은 아님), 콘솔 error/warning 0건. 이 측정에서 코드는 수정하지 않았다.
-  - 5-F에서 발견한 문제 2건(수정 전, 수정안은 사용자 검토 대기):
-    1. MAVLink 모드에서 한 번도 수신하지 못한 유닛(TNK-01/02 등)의 3D 오브젝트가 씬 초기 위치에 그대로 보인다. 목록에는 없어 운용자가 혼동한다. 수정안: `DroneView`가 첫 `SetTarget` 전에는 자식 렌더러를 꺼 두고 첫 배치 때 켠다(`HasTarget` 재사용, FakeGps 모드는 첫 프레임에 배치되므로 변화 없음). 두절로 바뀐 유닛은 마지막 위치에 계속 보인다.
-    2. 파서의 `Rejected`가 "모르는 메시지"와 "손상 프레임"을 구분하지 못한다(스트림이 켜진 뒤 1600개 이상). 알 수 없는 메시지를 한 바이트씩 건너뛰어 페이로드 안의 0xFD/0xFE를 새 후보로 세므로 과대 집계도 된다. 수정안: 사유별 카운터(`UnknownMessage`/`BadCrc`/`BadLength`/`Truncated`/`BadFlags`)로 나누고 `Rejected`는 합계로 유지한다. 모르는 메시지는 헤더의 길이만큼 건너뛰되(데이터그램 끝으로 제한) 손상 후보와 섞어 세지 않는다. 상태 표시줄 표기는 유지한다.
+  - 5-F에서 발견해 수정한 문제 2건(테스트 158건 통과):
+    1. MAVLink 모드에서 한 번도 수신하지 못한 유닛(TNK-01/02 등)의 3D 오브젝트가 씬 초기 위치에 그대로 보였다(목록에는 없음). `DroneView`가 `Awake`에서 자식 `Renderer`(모델·마커·경로선 포함)를 모두 끄고 첫 `SetTarget`에서 켠다. 이미 꺼져 있던 렌더러는 켜지 않는다. 마커 모양과 경로선은 원래 첫 샘플 전에는 비어 있었으나 이제 같은 규칙으로 묶였다. 두절 유닛은 마지막 위치에 계속 보인다. (EditMode에서는 `AddComponent`가 `Awake`를 부르지 않아 테스트가 리플렉션으로 호출한다.)
+    2. 파서의 `Rejected`가 미지원과 손상을 구분하지 못했다. 이제 `Unsupported`(해석하지 않는 메시지 ID, 정상 트래픽)와 `Corrupted`(= `Truncated`+`BadFlags`+`BadLength`+`BadCrc`)로 나누고 `Rejected`는 합계로 유지한다. 미지원 메시지는 헤더 길이만큼(v2 서명 13바이트 포함) 통째로 건너뛰어 페이로드 안 0xFD/0xFE를 새 후보로 세지 않는다. 헤더가 데이터그램을 넘는 길이를 주장하면 미지원이 아니라 잘림(손상)이다. 상태 표시줄은 "수신 N / 손상 M (미지원 K)"이다. 한계: 미지원으로 판정한 헤더는 CRC를 검증할 수 없어(CRC_EXTRA 모름) 우연히 맞는 노이즈를 미지원으로 셀 수 있다.
+    - 수정 후 Play 측정(SITL 켠 상태, 에디터): 261 데이터그램 기준 v1 0 / v2 143, 미지원 118, 손상 0, 샘플 112, 미등록 sysid 0. 수신하지 못한 4기는 렌더러 0개 활성, 목록은 1기.
   - 5-A: 소스 보고용 `ReportedStatus`(Normal/Warning)와 표시용 `UnitStatus`(+Lost)를 분리했다. `TelemetrySample.Status`가 `ReportedStatus`이며 `UnitStateStore`가 변환하고 Lost는 `Tick`만 붙인다. 표시 코드는 수정하지 않았다. (devlog 설계 결정 후보 1)
   - 5-B: `Assets/Scripts/DataSource/Mavlink/`에 CRC·프레임·파서·메시지 디코더(HEARTBEAT, GLOBAL_POSITION_INT)를 두었다. 테스트 112건 통과(신규 24건).
   - 설계 결정 후보 2: **v1·v2를 모두 파싱하고 버전별 카운터(`V1Frames`/`V2Frames`/`Rejected`)를 둔다.** 우리는 송신하지 않아 상대(ArduPilot 등)의 프로토콜 버전을 협상으로 바꿀 수 없으므로 수신 쪽이 유연해야 한다. SITL 연동 때 어떤 버전이 오는지·얼마나 버려지는지 디버깅에 쓴다. v2의 끝 0바이트 생략(truncation)은 메시지 정의 길이로 0 복원한다(잘린 프레임 테스트 포함).
@@ -89,7 +90,7 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 - 스크립트는 `Assets/Scripts/<역할>/` 아래에 역할별 폴더로 둔다. (예: `DataSource`, `Coordinate`, `View`, `UI`)
 - 환경: Unity `6000.6.5f1`, URP 17.6.0, Input System 1.20.0, Test Framework 1.8.0.
 - `*.csproj`, `*.slnx`와 `Library/`, `Temp/`, `Logs/`, `UserSettings/`는 Unity가 생성하므로 수정하지 않는다.
-- 빌드 스크립트는 없다. EditMode 테스트(`Assets/Tests/EditMode`, 150건)는 UnityMCP `run_tests` 또는 Unity batchmode로 실행한다.
+- 빌드 스크립트는 없다. EditMode 테스트(`Assets/Tests/EditMode`, 158건)는 UnityMCP `run_tests` 또는 Unity batchmode로 실행한다.
 - Player Settings의 Run In Background를 켜 두었다. 에디터가 비포커스여도 Play 모드가 진행된다.
 
 ```powershell

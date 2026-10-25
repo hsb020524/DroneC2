@@ -14,9 +14,34 @@ namespace DroneC2.View
         Quaternion targetRotation;
         Vector3 velocity;
         bool hasTarget;
+        Renderer[] hiddenRenderers;
 
         /// <summary>첫 목표를 받아 배치가 끝났는지 여부. 배치 전의 Transform 위치는 의미가 없다.</summary>
         public bool HasTarget => hasTarget;
+
+        void Awake()
+        {
+            HideUntilPlaced();
+        }
+
+        // 첫 목표 전에는 씬의 초기 위치가 의미 없으므로 모델·마커·경로선 등 자식 표시를 모두 숨긴다.
+        // 이미 꺼져 있던 렌더러는 그대로 둔다(첫 목표 때 켜지 않는다).
+        void HideUntilPlaced()
+        {
+            if (hasTarget || hiddenRenderers != null)
+                return;
+
+            var list = new System.Collections.Generic.List<Renderer>();
+            foreach (Renderer r in GetComponentsInChildren<Renderer>(true))
+            {
+                if (r.enabled)
+                {
+                    r.enabled = false;
+                    list.Add(r);
+                }
+            }
+            hiddenRenderers = list.ToArray();
+        }
 
         public void SetTarget(Vector3 position, Quaternion rotation)
         {
@@ -28,6 +53,16 @@ namespace DroneC2.View
                 // 첫 샘플은 보간 없이 바로 배치
                 transform.SetPositionAndRotation(position, rotation);
                 hasTarget = true;
+
+                if (hiddenRenderers != null)
+                {
+                    foreach (Renderer r in hiddenRenderers)
+                    {
+                        if (r != null)
+                            r.enabled = true;
+                    }
+                    hiddenRenderers = null;
+                }
             }
         }
 

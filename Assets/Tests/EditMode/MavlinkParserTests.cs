@@ -172,10 +172,97 @@ namespace DroneC2.Tests
         }
 
         [Test]
-        public void UnknownMessageId_IsRejected()
+        public void UnknownMessageId_IsCountedAsUnsupported_NotCorrupted()
         {
             var parser = new MavlinkParser();
             Assert.AreEqual(0, ParseAll(parser, BuildV2(999, 0, new byte[] { 1, 2, 3 })).Count);
+
+            Assert.AreEqual(1, parser.Unsupported);
+            Assert.AreEqual(0, parser.Corrupted);
+            Assert.AreEqual(1, parser.Rejected);
+        }
+
+        [Test]
+        public void UnsupportedV2_IsSkippedByLength_PayloadBytesAreNotRescanned()
+        {
+            // 페이로드 전체가 시작 바이트(0xFD/0xFE)라도 한 프레임으로 건너뛰어야 한다.
+            var junk = new byte[20];
+            for (int k = 0; k < junk.Length; k++) junk[k] = (k % 2 == 0) ? (byte)0xFD : (byte)0xFE;
+            var parser = new MavlinkParser();
+            var frames = ParseAll(parser, BuildV2(30, 0, junk), V2Heartbeat);
+
+            Assert.AreEqual(1, frames.Count);
+            Assert.AreEqual(1, parser.Unsupported);
+            Assert.AreEqual(0, parser.Corrupted);
+            Assert.AreEqual(1, parser.V2Frames);
+        }
+
+        [Test]
+        public void UnsupportedSignedV2_SkipSignatureToo()
+        {
+            // 서명 13바이트를 시작 바이트로 채워, 서명을 포함해 건너뛰지 않으면 손상으로 잡히게 한다.
+            byte[] unsupported = BuildV2(30, 0, new byte[] { 1, 2, 3 }, incompat: 0x01);
+            byte[] sig = new byte[13];
+            for (int k = 0; k < sig.Length; k++) sig[k] = 0xFD;
+            var parser = new MavlinkParser();
+            var frames = ParseAll(parser, unsupported, sig, V2Heartbeat);
+
+            Assert.AreEqual(1, frames.Count);
+            Assert.AreEqual(1, parser.Unsupported);
+            Assert.AreEqual(0, parser.Corrupted);
+        }
+
+        [Test]
+        public void UnsupportedV1_IsSkippedByLength()
+        {
+            // v1 msgid 30(ATTITUDE 등 미지원), 페이로드에 시작 바이트를 넣는다. CRC는 검증할 수 없다.
+            var frame = new List<byte> { MavlinkParser.StxV1, 4, 0, 1, 1, 30, 0xFD, 0xFE, 0xFD, 0xFE, 0x00, 0x00 };
+            var parser = new MavlinkParser();
+            var frames = ParseAll(parser, frame.ToArray(), V1Heartbeat);
+
+            Assert.AreEqual(1, frames.Count);
+            Assert.AreEqual(1, parser.Unsupported);
+            Assert.AreEqual(0, parser.Corrupted);
+            Assert.AreEqual(1, parser.V1Frames);
+        }
+
+        [Test]
+        public void UnsupportedFrame_ClaimingMoreThanDatagram_IsTruncated_NotSkipped()
+        {
+            // 헤더가 데이터그램을 넘는 길이를 주장하면 손상이다. 뒤의 정상 프레임을 삼키지 않는다.
+            var bogus = new byte[] { MavlinkParser.StxV2, 200, 0, 0, 1, 1, 1, 30, 0, 0 };
+            var parser = new MavlinkParser();
+            var frames = ParseAll(parser, bogus, V2Heartbeat);
+
+            Assert.AreEqual(1, frames.Count);
+            Assert.AreEqual(0, parser.Unsupported);
+            Assert.GreaterOrEqual(parser.Truncated, 1);
+        }
+
+        [Test]
+        public void CorruptionReasons_AreCountedSeparately()
+        {
+            byte[] badCrc = (byte[])V2Heartbeat.Clone();
+            badCrc[badCrc.Length - 1] ^= 0xFF;
+            var parser = new MavlinkParser();
+
+            ParseAll(parser, badCrc);
+            Assert.AreEqual(1, parser.BadCrc);
+
+            ParseAll(parser, BuildV2(0, 50, new byte[10])); // 정의보다 긴 페이로드
+            Assert.AreEqual(1, parser.BadLength);
+
+            ParseAll(parser, BuildV2(0, 50, new byte[9], incompat: 0x02)); // 알 수 없는 플래그
+            Assert.AreEqual(1, parser.BadFlags);
+
+            byte[] cut = new byte[V2TruncatedPosition.Length - 5];
+            System.Array.Copy(V2TruncatedPosition, cut, cut.Length);
+            ParseAll(parser, cut);
+            Assert.GreaterOrEqual(parser.Truncated, 1);
+
+            Assert.AreEqual(0, parser.Unsupported);
+            Assert.AreEqual(parser.BadCrc + parser.BadLength + parser.BadFlags + parser.Truncated, parser.Corrupted);
+            Assert.AreEqual(parser.Corrupted, parser.Rejected);
         }
 
         [Test]

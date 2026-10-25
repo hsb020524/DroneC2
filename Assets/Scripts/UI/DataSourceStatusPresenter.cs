@@ -68,10 +68,11 @@ namespace DroneC2.UI
                 MavlinkReceiver receiver = selector.Receiver;
                 MavlinkParser parser = receiver != null ? receiver.Parser : null;
                 long received = parser != null ? parser.V1Frames + parser.V2Frames : 0;
-                long rejected = parser != null ? parser.Rejected : 0;
+                long corrupted = parser != null ? parser.Corrupted : 0;
+                long unsupported = parser != null ? parser.Unsupported : 0;
                 status = DataSourceStatusFormat.Describe(selector.Mode, receiver != null,
                     receiver != null && receiver.IsListening, receiver != null ? receiver.Port : 0,
-                    received, rejected, receiver != null ? receiver.UnknownSysid : 0);
+                    received, corrupted, unsupported, receiver != null ? receiver.UnknownSysid : 0);
             }
 
             label.text = status.Text;
