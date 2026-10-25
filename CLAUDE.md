@@ -15,7 +15,7 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 
 > 단계가 끝날 때마다 이 섹션을 갱신한다.
 
-- 현재 단계: 5단계(MAVLink) 구현·검증·문서 정리 완료(`stage-5` 태그는 로컬 생성, 푸시 전 보고 대기) — 6단계는 정의 전(후보는 아래 "6단계 후보")
+- 현재 단계: 5단계(MAVLink) 구현·검증·문서 정리 완료(`stage-5` 태그 푸시 완료) — 6단계는 정의 전(후보는 아래 "6단계 후보")
 - 완료: 1단계 전체(평면 위 가짜 GPS 드론, 경로선, 추적 카메라)와 2단계 구현·검증.
   - 2단계: `Stage2Cesium` 씬(Cesium World Terrain + Bing Maps Aerial)에서 `CesiumGeoreferenceConverter`(`ICoordinateConverter`)로 위경도를 월드 좌표로 변환한다. `ITerrainHeightSampler` + `TerrainHeightGrid`(격자 캐시·쌍선형 보간) + `AltitudeResolver`로 지표 기준 고도(`AltitudeMode`: Absolute/AboveGround/ClampToGround)를 지원한다. 드론은 `AboveGround` 80m로 경로를 이동하며 지표 위 높이가 77~81m로 유지됨을 실측했다.
   - 기준점: 35.563°N, 83.499°W(클링맨스 돔 부근), 지오레퍼런스 높이 2000m(타원체고). 경로는 기준점 주변 약 1.2km 사각형(코너까지 약 850m), 속도 25m/s.
@@ -30,7 +30,7 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
   - 시연 지역: 그레이트 스모키 산맥 국립공원(미국). 보안상 국내 지역(특히 접경 지역)은 의도적으로 제외했고, 한국 산악 지형과 고도(최고 약 2,000m)·숲 능선이 유사해 대체 지역으로 선정했다.
   - Cesium ion 토큰: DroneC2 전용 토큰, 권한 `assets:read`만, 접근 대상은 필요한 지형·이미지 에셋으로 제한. `Assets/CesiumSettings/`는 통째로 `.gitignore` 처리(커밋 금지, `ion.cesium.com.asset`·`CesiumRuntimeSettings.asset`에 토큰 필드가 있음). 토큰은 채팅에 붙여넣지 않고 사용자가 Unity Cesium 패널에서 직접 연결한다. README에는 본인 토큰을 넣어 실행하라는 안내를 쓴다.
   - 씬이 참조하는 `ionServer` GUID는 무시된 `.asset`에 묶여 있어 다른 환경에서는 참조가 비어 있을 수 있다. 새 환경에서는 Cesium 패널에서 토큰을 연결한 뒤 씬을 열어 확인한다.
-- 5단계 진행(계획: 5-A 상태 enum 분리 → 5-B 파서 → 5-C 수신기 → 5-D 전환 → 5-E 에미터 → 5-F SITL 1기 → 5-G 문서). 완료: 5-A~5-F(테스트 162건 통과). 5-F: Mission Planner 1.3.83 + SITL(ArduCopter 4.7.2) 1기로 실측 완료. 연결 절차(Mirror 대신 SITL이 직접 송신): SIMULATION 탭 Extra command line `--home=35.563,-83.499,2022,0 --serial1=udpclient:127.0.0.1:14560` → Multirotor → Stable, 파라미터 `MAV2_POSITION`=4(4.7의 `MAVn` 번호는 1부터, MAV2 = SERIAL1; 부팅 때 적용되므로 쓴 뒤 SITL 재시작), `SERIAL1_PROTOCOL`=2. Unity는 `TelemetrySourceSelector` 모드를 Mavlink로 바꿔 Play(씬 저장본은 FakeGps, 확인함). 이동 실측: 100m 이상 비행 시 최대 10.25m/s, 방위가 이동 방향과 일치, 상대고도 30.00m 유지, 지표 위 높이가 `홈 지형 + 상대고도 − 현재 지형`과 일치(샘플러 기준), 수신 끊김 없음(기록 간격 1.2초 초과 없음). GIF `docs/images/stage5-mavlink-sitl.gif`(720×405, 약 13초, 7.9MB) 촬영·커밋 완료. 5-G(devlog·README·requirements·architecture·CLAUDE.md 갱신, 스크린샷 `docs/images/stage5-mavlink-sitl.png`, `stage-5` 태그)까지 완료. 남음: push(사용자 확인 후, 푸시 전 토큰·`Assets/CesiumSettings` 검사). 계획 파일은 사용자 홈의 `.claude/plans/5-mellow-sparrow.md`.
+- 5단계 진행(계획: 5-A 상태 enum 분리 → 5-B 파서 → 5-C 수신기 → 5-D 전환 → 5-E 에미터 → 5-F SITL 1기 → 5-G 문서). 완료: 5-A~5-F(테스트 162건 통과). 5-F: Mission Planner 1.3.83 + SITL(ArduCopter 4.7.2) 1기로 실측 완료. 연결 절차(Mirror 대신 SITL이 직접 송신): SIMULATION 탭 Extra command line `--home=35.563,-83.499,2022,0 --serial1=udpclient:127.0.0.1:14560` → Multirotor → Stable, 파라미터 `MAV2_POSITION`=4(4.7의 `MAVn` 번호는 1부터, MAV2 = SERIAL1; 부팅 때 적용되므로 쓴 뒤 SITL 재시작), `SERIAL1_PROTOCOL`=2. Unity는 `TelemetrySourceSelector` 모드를 Mavlink로 바꿔 Play(씬 저장본은 FakeGps, 확인함). 이동 실측: 100m 이상 비행 시 최대 10.25m/s, 방위가 이동 방향과 일치, 상대고도 30.00m 유지, 지표 위 높이가 `홈 지형 + 상대고도 − 현재 지형`과 일치(샘플러 기준), 수신 끊김 없음(기록 간격 1.2초 초과 없음). GIF `docs/images/stage5-mavlink-sitl.gif`(720×405, 약 13초, 7.9MB) 촬영·커밋 완료. 5-G(devlog·README·requirements·architecture·CLAUDE.md 갱신, 스크린샷 `docs/images/stage5-mavlink-sitl.png`, `stage-5` 태그)까지 완료. push 완료. 계획 파일은 사용자 홈의 `.claude/plans/5-mellow-sparrow.md`.
   - 5-F 진행 기록(2026-10-25): SITL(ArduCopter 4.7.2)에 `--serial1=udpclient:127.0.0.1:14560`을 주면 Mission Planner 없이 Unity로 직접 들어온다(Mirror의 "MAVLink 직렬 출력" 표는 UDP 출력에서 NullReference 오류). 4.7.2에서는 스트림 파라미터가 `MAVn_POSITION`(MAV2 = SERIAL1)이고 **부팅 때 적용되므로 쓴 뒤 SITL을 재시작해야 한다**(재시작 전에는 HEARTBEAT만 와서 샘플 0). 지상 측정: v1 0/v2만, UAV-01이 홈 35.563/-83.499, HomeRelative, 지표 위 약 −0.01m(샘플러 기준), MAV_TYPE 불일치 경고 없음. 30m 이륙(Guided→Arm→Takeoff 30) 후 relAlt 30.00, 월드 높이가 `홈 지형 + 상대고도`와 0.00m 차이(샘플러 기준이라 메시 독립 검증은 아님), 콘솔 error/warning 0건. 이 측정에서 코드는 수정하지 않았다.
   - 5-F에서 발견해 수정한 문제 3건(테스트 162건 통과). 3번: 상세 패널 "상태"가 UXML 기본값 `-`로 남던 문제(Play 중 에셋 새로고침 직후 재현, 라벨이 외부에서 초기화되면 이전 값 캐시 때문에 복구되지 않음)는 `UnitDetailPresenter.ApplyStatusTo`가 라벨의 실제 텍스트와 비교하도록 고쳤다. 상단 데이터 소스 표시줄은 문구가 길어져 우측 패널과 겹쳐서 좌우 패널 사이 영역(left 480/right 680px, 글자 18px)으로 옮겼다. 1·2번:
     1. MAVLink 모드에서 한 번도 수신하지 못한 유닛(TNK-01/02 등)의 3D 오브젝트가 씬 초기 위치에 그대로 보였다(목록에는 없음). `DroneView`가 `Awake`에서 자식 `Renderer`(모델·마커·경로선 포함)를 모두 끄고 첫 `SetTarget`에서 켠다. 이미 꺼져 있던 렌더러는 켜지 않는다. 마커 모양과 경로선은 원래 첫 샘플 전에는 비어 있었으나 이제 같은 규칙으로 묶였다. 두절 유닛은 마지막 위치에 계속 보인다. (EditMode에서는 `AddComponent`가 `Awake`를 부르지 않아 테스트가 리플렉션으로 호출한다.)
@@ -58,7 +58,7 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 ### 남은 할 일
 
 - [x] `stage-4` 태그와 4-C 이후 커밋의 푸시(푸시 전 토큰·`Assets/CesiumSettings` 검사)
-- [ ] `stage-5` 태그와 5단계 커밋의 푸시(푸시 전 토큰·`Assets/CesiumSettings` 검사, 사용자 확인 후)
+- [x] `stage-5` 태그와 5단계 커밋의 푸시(푸시 전 토큰·`Assets/CesiumSettings` 검사 0건, 사용자가 GitHub 렌더링 확인 후 태그 푸시)
 - [ ] 저장소 공개 전: 새 폴더에 클론해서 README 실행 방법대로 동작하는지 확인 (Cesium ion 토큰 연결 후 씬 열기, `ionServer` 참조가 비어 있지 않은지 포함)
 
 | 단계 | 내용 | 상태 |
