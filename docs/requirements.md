@@ -143,7 +143,7 @@ DroneC2는 **Unity 기반 드론·전차 GPS 위치 및 작전 상황 3D 관제 
 | 항목 | 값 |
 |---|---|
 | 수신 | 루프백 `127.0.0.1:14560`(UDP). 송신 코드 없음 |
-| 유닛 매핑 | `Assets/Config/MavlinkUnits.asset`(sysid 1~3 = UAV-01~03, 4~5 = TNK-01~02, 홈 35.563°N 83.499°W) |
+| 유닛 매핑 | `Assets/Config/MavlinkUnits.asset`(sysid 1–3 = UAV-01부터 03까지, 4–5 = TNK-01·02, 홈 35.563°N 83.499°W) |
 | 두절 판정 | 3단계와 같은 2초 규칙 |
 | 테스트 | EditMode 175건 통과 |
 

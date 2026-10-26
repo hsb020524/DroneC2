@@ -1,10 +1,14 @@
-# MAVLink 에미터(tools/mavlink_emitter.py) 실행용 의존성. 저장소 밖 가상환경에 설치한다.
+# Dependencies for the MAVLink emitter (tools/mavlink_emitter.py).
+# Install into a virtual environment outside the repository:
 #
 #   python -m venv C:\UnityProjects\DroneC2-tools\venv
 #   C:\UnityProjects\DroneC2-tools\venv\Scripts\python.exe -m pip install -r tools/requirements.txt
 #
-# pymavlink는 LGPL-3.0이다. 별도 도구(프로세스)로만 사용하며 Unity 프로젝트·빌드에 포함하지 않는다.
-# (docs/requirements.md 6절 참고)
+# Keep this file ASCII-only: pip reads it with the system code page
+# (cp949 on Korean Windows) and fails on UTF-8 multibyte characters.
+#
+# pymavlink is LGPL-3.0. It is used only as a separate tool process and is not
+# included in the Unity project or builds (see docs/requirements.md, section 6).
 pymavlink==2.4.50
 fastcrc==0.5.0
 lxml==6.1.3
