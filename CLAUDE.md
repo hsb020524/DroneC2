@@ -62,7 +62,7 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 - [x] `stage-4` 태그와 4-C 이후 커밋의 푸시(푸시 전 토큰·`Assets/CesiumSettings` 검사)
 - [x] `stage-5` 태그와 5단계 커밋의 푸시(푸시 전 토큰·`Assets/CesiumSettings` 검사 0건, 사용자가 GitHub 렌더링 확인 후 태그 푸시)
 - [x] 6단계 ①(소스 전환 시 초기화) 구현·검증·문서 정리(커밋 완료, 푸시 전)
-- [ ] 저장소 공개 전 **git 전체 기록 검사**: 모든 브랜치·태그의 모든 커밋(`git log --all`, 삭제된 파일·과거 diff 포함)에서 JWT 형태 `eyJ…`, `Assets/CesiumSettings` 경로, 개인정보(이메일·로컬 경로 `C:\Users\<이름>`·사용자명 등) 검색. 읽기 전용으로 하고, 발견 시 결과를 보여 준 뒤 사용자 승인으로만 재발급·기록 정리
+- [x] 저장소 공개 전 **git 전체 기록 검사**(2026-10-26, 읽기 전용): 84개 커밋(모든 refs·태그 객체)의 텍스트 diff(삭제된 줄 포함)와 전체 객체 482 blob의 원본 바이트에서 검사했다. JWT `eyJ…` 0건, `Assets/CesiumSettings` 경로가 추적된 적 없음, `_ionAccessToken:` 필드는 값이 모두 비어 있음, API 키·GitHub 토큰·개인키·`access_token=` 패턴 0건, 의심 파일명 없음, 로컬 Windows 계정명·`C:\Users\<이름>` 경로·이메일·사설 IP 0건, 작성자·커미터 84건 모두 GitHub noreply. 원격 refs는 `main`과 `stage-1~5` 태그뿐. 남은 항목: ① `ProjectSettings.asset`의 `organizationId: hsb020524`(GitHub 사용자명과 같은 공개 식별자, 그대로 둠) ② Unity 템플릿 `Layout.wlt`의 제3자 로컬 경로는 기록 재작성 없이 현재 버전에서 템플릿 파일(`Assets/TutorialInfo`, `Assets/Readme.asset`)을 삭제해 처리했다(과거 커밋에는 남음, 참조 없음 확인, 컴파일 오류 0건·테스트 175건 통과) ③ devlog의 토큰 재발급 기록은 보안 사고 대응 사례로 남기기로 결정. `.gitattributes`의 `*.wlt` 규칙은 삭제하지 않는다.
 - [ ] 저장소 공개 전 **docs 이미지 전수 검사**: `docs/images/*.png|gif`를 하나씩 열어(GIF는 프레임 샘플) 토큰이 든 URL·Cesium 패널·계정명·이메일·로컬 경로·창 제목이 보이는지, 메타데이터에 개인정보가 없는지 확인
 - [ ] 저장소 공개 전: 새 폴더에 클론해서(사용자가 README만 보고 직접 수행, 원본 Unity는 닫고 진행, Claude는 막힌 곳 기록·README 수정안 정리) README 실행 방법대로 동작하는지 확인 (Cesium ion 토큰 연결 후 씬 열기, `ionServer` 참조가 비어 있지 않은지 포함)
 
