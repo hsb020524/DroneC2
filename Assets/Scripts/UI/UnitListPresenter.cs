@@ -87,6 +87,7 @@ namespace DroneC2.UI
             store.UnitAdded += OnUnitAdded;
             store.StatusChanged += OnStatusChanged;
             store.SelectionChanged += OnSelectionChanged;
+            store.Cleared += Rebuild;
 
             if (overviewButton != null)
                 overviewButton.clicked += OnOverviewClicked;
@@ -102,6 +103,7 @@ namespace DroneC2.UI
             store.UnitAdded -= OnUnitAdded;
             store.StatusChanged -= OnStatusChanged;
             store.SelectionChanged -= OnSelectionChanged;
+            store.Cleared -= Rebuild;
             store = null;
 
             if (overviewButton != null)
