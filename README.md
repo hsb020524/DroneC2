@@ -42,7 +42,7 @@ Cesium World Terrain 위에 위경도 기준으로 드론을 배치하고, 지�
 
 ### 5단계 — MAVLink 시뮬레이터 연동
 
-ArduPilot SITL(Mission Planner)이 보내는 MAVLink v1·v2 텔레메트리를 UDP로 받아 유닛을 움직입니다. 수신 전용이며 요청이나 명령을 보내지 않습니다. 데이터 소스는 설정으로 가상 GPS와 MAVLink 사이를 전환하고(Play 시작 전 설정 기준), MAVLink 모드에서는 가짜 GPS로 대체하지 않으며, 수신하지 못한 유닛은 화면에도 나타나지 않습니다. 고도는 홈 기준(`relative_alt`)에 홈 지형 높이를 더해 지형 위에 놓습니다.
+ArduPilot SITL(Mission Planner)이 보내는 MAVLink v1·v2 텔레메트리를 UDP로 받아 유닛을 움직입니다. 수신 전용이며 요청이나 명령을 보내지 않습니다. 데이터 소스는 설정으로 가상 GPS와 MAVLink 사이를 전환하고(Play 중 전환하면 이전 소스의 유닛을 비웁니다), MAVLink 모드에서는 가짜 GPS로 대체하지 않으며, 수신하지 못한 유닛은 화면에도 나타나지 않습니다. 고도는 홈 기준(`relative_alt`)에 홈 지형 높이를 더해 지형 위에 놓습니다.
 
 ![5단계 결과 스크린샷](docs/images/stage5-mavlink-sitl.png)
 
@@ -55,7 +55,7 @@ ArduPilot SITL(Mission Planner)이 보내는 MAVLink v1·v2 텔레메트리를 U
 | 엔진 | Unity `6000.6.5f1`, URP 17.6.0, Input System 1.20.0 |
 | 지형 | Cesium for Unity 1.26.0, Cesium World Terrain, Bing Maps Aerial (Cesium ion) |
 | UI | UI Toolkit (런타임 UIDocument, UXML/USS) |
-| 테스트 | Unity Test Framework 1.8.0 (EditMode 162건) |
+| 테스트 | Unity Test Framework 1.8.0 (EditMode 175건) |
 | 개발 도구 | Claude Code, MCP for Unity |
 | 언어 | C# |
 
@@ -120,7 +120,7 @@ flowchart LR
 
 ### 5. MAVLink 모드 (5단계)
 
-기본은 가상 GPS(시뮬레이션)입니다. 화면 위 가운데의 표시줄이 현재 데이터 소스와 수신 상태를 항상 보여 줍니다. MAVLink로 바꾸려면 `Stage3Control` 씬의 `TelemetrySourceSelector`에서 Mode를 `Mavlink`로 바꾼 뒤 Play합니다. **소스 전환은 Play 시작 전 설정 기준**입니다. Play 중에 바꾸면 이전 소스가 등록한 유닛이 목록에 두절로 남을 수 있습니다(알려진 한계). 이때 수신기(`MavlinkReceiver`)가 `127.0.0.1:14560`(UDP)에서 수신만 합니다. 유닛에 명령을 보내지 않습니다.
+기본은 가상 GPS(시뮬레이션)입니다. 화면 위 가운데의 표시줄이 현재 데이터 소스와 수신 상태를 항상 보여 줍니다. MAVLink로 바꾸려면 `Stage3Control` 씬의 `TelemetrySourceSelector`에서 Mode를 `Mavlink`로 바꾼 뒤 Play합니다. Play 중에 바꿔도(Inspector에서 값을 바꾸거나 `SetMode` 호출) 이전 소스의 유닛·3D 표시·경로선·선택이 모두 비워진 뒤 새 소스의 유닛만 나타나므로 가짜와 실제 데이터가 섞이지 않습니다. 가짜 GPS로 돌아오면 시나리오를 처음부터 다시 시작합니다. MAVLink 모드에서 한 번도 수신하지 못한 유닛은 목록에 나타나지 않습니다. 이때 수신기(`MavlinkReceiver`)가 `127.0.0.1:14560`(UDP)에서 수신만 합니다. 유닛에 명령을 보내지 않습니다.
 
 데이터를 보내는 가상 에미터는 Python 도구이며 `pymavlink`(LGPL-3.0)를 별도 프로세스로만 씁니다. 가상환경은 저장소 밖에 만듭니다.
 
@@ -166,7 +166,7 @@ C:\UnityProjects\DroneC2-tools\venv\Scripts\python.exe tools/mavlink_emitter.py 
 
 ### 6. 테스트
 
-Unity의 Test Runner(`Window > General > Test Runner`)에서 EditMode를 실행합니다. 162건이 모두 통과해야 합니다.
+Unity의 Test Runner(`Window > General > Test Runner`)에서 EditMode를 실행합니다. 175건이 모두 통과해야 합니다.
 
 ## 개발 방식
 

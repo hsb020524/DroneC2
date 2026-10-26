@@ -15,7 +15,7 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 
 > 단계가 끝날 때마다 이 섹션을 갱신한다.
 
-- 현재 단계: 5단계(MAVLink) 구현·검증·문서 정리 완료(`stage-5` 태그 푸시 완료) — 6단계는 정의 전(후보는 아래 "6단계 후보")
+- 현재 단계: 5단계(MAVLink) 구현·검증·문서 정리 완료(`stage-5` 태그 푸시 완료). 6단계는 후보 ①(소스 전환 시 초기화)만 구현·검증·커밋했고(푸시 전, 아래 "6단계 ①"), 나머지 6단계 범위는 정의 전(후보는 아래 "6단계 후보")
 - 완료: 1단계 전체(평면 위 가짜 GPS 드론, 경로선, 추적 카메라)와 2단계 구현·검증.
   - 2단계: `Stage2Cesium` 씬(Cesium World Terrain + Bing Maps Aerial)에서 `CesiumGeoreferenceConverter`(`ICoordinateConverter`)로 위경도를 월드 좌표로 변환한다. `ITerrainHeightSampler` + `TerrainHeightGrid`(격자 캐시·쌍선형 보간) + `AltitudeResolver`로 지표 기준 고도(`AltitudeMode`: Absolute/AboveGround/ClampToGround)를 지원한다. 드론은 `AboveGround` 80m로 경로를 이동하며 지표 위 높이가 77~81m로 유지됨을 실측했다.
   - 기준점: 35.563°N, 83.499°W(클링맨스 돔 부근), 지오레퍼런스 높이 2000m(타원체고). 경로는 기준점 주변 약 1.2km 사각형(코너까지 약 850m), 속도 25m/s.
@@ -24,8 +24,10 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 - 3단계: `Stage3Control` 씬에서 드론 3기(`AboveGround` 60/80/100m)·전차 2기(`ClampToGround`)를 동시에 표시한다. 구조: `UnitKind`/`UnitStatus`는 DataSource 계층, `UnitStateStore`(순수 로직)·`UnitRegistry`(MonoBehaviour)가 수신·두절 판정(2초)·선택을 담고, `UnitMarker`(마커)·`CameraSelectionBinder`(선택→카메라)·UI Toolkit 목록/상세 패널(`UnitListPresenter`, `UnitDetailPresenter`, `UnitFormat`)이 레지스트리만 읽는다. 유닛은 `Assets/Prefabs/Units/Drone.prefab`·`Tank.prefab`이며 변환기·레지스트리는 씬에 하나씩 두고 공유한다.
   - EditMode 테스트 65건 통과. 10기 에디터 평균 643 FPS(빌드 측정 아님). UI는 1920×1080 기준 높이 맞춤 스케일링이다.
   - 알려진 한계: TNK-01 경로가 도로에서 벗어나는 구간이 있다(야지 주행으로 보고 보정하지 않기로 결정). TNK-02 경로는 짧다(동쪽 연장은 경사 15° 초과). 높이 캐시 상한 없음. 3D 오브젝트 클릭 선택 없음. (Esc 키 해제는 사용자가 직접 Play로 확인함)
-- 5단계 알려진 한계: **소스 전환은 Play 시작 전 설정 기준이다.** `TelemetrySourceSelector`가 시작 시 한 번만 적용하고, Play 중에 모드를 바꾸면 이전 소스가 등록한 유닛이 `UnitStateStore`·목록에 두절로 남아 가짜·실제 데이터가 섞인다(가짜·실제를 섞지 않는다는 원칙에 어긋남). 문서(README·devlog·requirements·architecture)에 한계로 적었다. 스크린샷·GIF는 편집 모드에서 모드 값만 바꾸고(씬 저장 금지) Play를 시작해 찍는다.
-- 6단계 후보(우선순위 순): ① **소스 전환 시 스토어·목록 초기화**(1순위) ② 지상 유닛 높이를 물리 메시 레이캐스트로 정하고 타일이 없으면 샘플러로 대체(콜라이더 비용·LOD 전환 시 높이 튐 평가 필요, 현재 약 ±4m) ③ 테이블 기반 유닛 사전 등록(수신 전 두절 표시) ④ 전차(Rover) SITL 확인 ⑤ 지표 높이 캐시 상한
+- 6단계 ①(소스 전환 시 초기화, 구현·검증·커밋 완료, 푸시 전): 5단계의 한계("소스 전환은 Play 시작 전 설정 기준", 전환하면 이전 유닛이 두절로 남아 가짜·실제가 섞임)를 해소했다. `TelemetrySourceSelector.SetMode`(Play 중 인스펙터 변경도 에디터 전용 `OnValidate`+`delayCall`로 받음, `#if UNITY_EDITOR`)가 전환하면 **이전 소스 구독 해제 → 각 바인더 `ResetUnit()` → `UnitRegistry.ResetUnits()` → 새 소스 켜기** 순서로 진행한다(초기화가 소스 활성화보다 먼저여야 `FakeGpsSource`가 켜질 때 바로 내보내는 첫 샘플이 지워지지 않는다). 초기화 대상: `UnitStateStore.Clear()`(유닛·선택·고정, `Cleared` 이벤트), 레지스트리의 뷰·텍스처 참조, `DroneView.ResetPlacement()`(렌더러 다시 숨김, `PathTrail`이 이벤트로 경로 삭제), 마커 선택, 카메라. `UnitListPresenter`는 `Cleared`로 목록을 다시 그린다. 시작 시 `Apply()`는 초기화하지 않는다. `FakeGpsSource`는 다시 켜질 때마다 시나리오를 처음부터 다시 시작한다(`OnEnable`→`Begin`). 선택기에 `registry` 필드를 씬에서 연결했다(없으면 경고). **카메라 `RenderTexture`는 `UnitCameraRig`가 소유**하므로 레지스트리는 참조만 버리고 `UnitCameraRig.ReleaseTexture()`가 렌더를 끄고 `Release()`만 한다(객체는 `OnDestroy`까지 유지, 다시 렌더하면 자동 재생성). EditMode 테스트 175건 통과.
+  - Play 측정(에디터): 5기+선택·고정 상태에서 `SetMode(Mavlink)` → 유닛 0, 선택·고정 null, 배치 0, 활성 렌더러 0, 렌더 중 카메라 0, 목록 0행("유닛 목록 (0)"), 텍스처 5개 모두 해제. 에미터(sysid 1·2)를 보내자 UAV-01·02만 등장(미등록 sysid 0, 가짜 잔상 없음). `SetMode(FakeGps)`로 되돌리면 5기가 즉시 복구되고 수신 소켓이 닫힌다. 전환 12회 반복 후에도 전체 `RenderTexture` 수는 31개로 같았고(유닛 카메라 5개), 해제된 텍스처는 유닛을 선택하면 다시 만들어졌다. 콘솔 error·warning 0건. 씬은 모드를 바꾼 채 저장하지 않았다(기본 FakeGps; 스크린샷·GIF도 모드 값만 바꾸고 씬 저장 없이 Play). 남은 한계는 "한 번도 수신하지 못한 유닛은 목록에 나타나지 않음"(후보 ③).
+  - 문서(README·requirements·architecture)는 이에 맞춰 수정했고, devlog의 5단계 기록은 당시 사실이라 남기되 6단계 ①에서 해소했다고 덧붙였다. 6단계 devlog 정리는 단계가 끝날 때 한다.
+- 6단계 후보(우선순위 순): ① ~~소스 전환 시 스토어·목록 초기화~~(완료) ② 지상 유닛 높이를 물리 메시 레이캐스트로 정하고 타일이 없으면 샘플러로 대체(콜라이더 비용·LOD 전환 시 높이 튐 평가 필요, 현재 약 ±4m) ③ 테이블 기반 유닛 사전 등록(수신 전 두절 표시) ④ 전차(Rover) SITL 확인 ⑤ 지표 높이 캐시 상한
 - 다음: 6단계 범위는 정해지지 않았다. 시작 전에 사용자와 범위를 정한다.
   - 시연 지역: 그레이트 스모키 산맥 국립공원(미국). 보안상 국내 지역(특히 접경 지역)은 의도적으로 제외했고, 한국 산악 지형과 고도(최고 약 2,000m)·숲 능선이 유사해 대체 지역으로 선정했다.
   - Cesium ion 토큰: DroneC2 전용 토큰, 권한 `assets:read`만, 접근 대상은 필요한 지형·이미지 에셋으로 제한. `Assets/CesiumSettings/`는 통째로 `.gitignore` 처리(커밋 금지, `ion.cesium.com.asset`·`CesiumRuntimeSettings.asset`에 토큰 필드가 있음). 토큰은 채팅에 붙여넣지 않고 사용자가 Unity Cesium 패널에서 직접 연결한다. README에는 본인 토큰을 넣어 실행하라는 안내를 쓴다.
@@ -59,7 +61,10 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 
 - [x] `stage-4` 태그와 4-C 이후 커밋의 푸시(푸시 전 토큰·`Assets/CesiumSettings` 검사)
 - [x] `stage-5` 태그와 5단계 커밋의 푸시(푸시 전 토큰·`Assets/CesiumSettings` 검사 0건, 사용자가 GitHub 렌더링 확인 후 태그 푸시)
-- [ ] 저장소 공개 전: 새 폴더에 클론해서 README 실행 방법대로 동작하는지 확인 (Cesium ion 토큰 연결 후 씬 열기, `ionServer` 참조가 비어 있지 않은지 포함)
+- [x] 6단계 ①(소스 전환 시 초기화) 구현·검증·문서 정리(커밋 완료, 푸시 전)
+- [ ] 저장소 공개 전 **git 전체 기록 검사**: 모든 브랜치·태그의 모든 커밋(`git log --all`, 삭제된 파일·과거 diff 포함)에서 JWT 형태 `eyJ…`, `Assets/CesiumSettings` 경로, 개인정보(이메일·로컬 경로 `C:\Users\<이름>`·사용자명 등) 검색. 읽기 전용으로 하고, 발견 시 결과를 보여 준 뒤 사용자 승인으로만 재발급·기록 정리
+- [ ] 저장소 공개 전 **docs 이미지 전수 검사**: `docs/images/*.png|gif`를 하나씩 열어(GIF는 프레임 샘플) 토큰이 든 URL·Cesium 패널·계정명·이메일·로컬 경로·창 제목이 보이는지, 메타데이터에 개인정보가 없는지 확인
+- [ ] 저장소 공개 전: 새 폴더에 클론해서(사용자가 README만 보고 직접 수행, 원본 Unity는 닫고 진행, Claude는 막힌 곳 기록·README 수정안 정리) README 실행 방법대로 동작하는지 확인 (Cesium ion 토큰 연결 후 씬 열기, `ionServer` 참조가 비어 있지 않은지 포함)
 
 | 단계 | 내용 | 상태 |
 |---|---|---|
@@ -93,7 +98,7 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 - 스크립트는 `Assets/Scripts/<역할>/` 아래에 역할별 폴더로 둔다. (예: `DataSource`, `Coordinate`, `View`, `UI`)
 - 환경: Unity `6000.6.5f1`, URP 17.6.0, Input System 1.20.0, Test Framework 1.8.0.
 - `*.csproj`, `*.slnx`와 `Library/`, `Temp/`, `Logs/`, `UserSettings/`는 Unity가 생성하므로 수정하지 않는다.
-- 빌드 스크립트는 없다. EditMode 테스트(`Assets/Tests/EditMode`, 162건)는 UnityMCP `run_tests` 또는 Unity batchmode로 실행한다.
+- 빌드 스크립트는 없다. EditMode 테스트(`Assets/Tests/EditMode`, 175건)는 UnityMCP `run_tests` 또는 Unity batchmode로 실행한다.
 - Player Settings의 Run In Background를 켜 두었다. 에디터가 비포커스여도 Play 모드가 진행된다.
 
 ```powershell

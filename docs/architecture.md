@@ -210,7 +210,7 @@ flowchart LR
 | 데이터 소스 | `MavlinkUdpListener`, `MavlinkReceiver` | 루프백 UDP 수신 스레드와 상한 있는 큐(드롭 카운트), 메인 스레드 `Update`에서 큐를 비움. 송신 없음 |
 | 데이터 소스 | `MavlinkTelemetryRouter`, `MavlinkUnitTable`, `MavlinkUnitSource` | sysid → 유닛 조회(테이블 밖은 `UnknownSysid`), 상태·방위·고도 의미 결정, sysid별 `ITelemetrySource` |
 | 데이터 소스 | `ReportedStatus`, `AltitudeMode.HomeRelative`, `TelemetrySample.AltitudeReference` | 소스 보고 상태와 표시 상태 분리, 고도 기준을 샘플이 싣고 옴(필수 인자) |
-| 연결 | `TelemetrySourceSelector`, `UnitTelemetryBinder.SetSource`, `AltitudeResolver` | 시작 시 소스 전환. `HomeRelative`는 샘플이 싣고 온 홈 위경도의 지형 높이(홈이 바뀔 때만 재조회) + 상대고도 |
+| 연결 | `TelemetrySourceSelector`, `UnitTelemetryBinder.SetSource`, `AltitudeResolver` | 시작·Play 중 소스 전환(전환 시 유닛 초기화). `HomeRelative`는 샘플이 싣고 온 홈 위경도의 지형 높이(홈이 바뀔 때만 재조회) + 상대고도 |
 | 표시 | `DroneView` | 첫 목표 전에는 자식 렌더러(모델·마커·경로선)를 숨김 |
 | UI | `DataSourceStatusPresenter`, `DataSourceStatusFormat` | 상단 표시줄: 가상 GPS(시뮬레이션) / `MAVLink · 127.0.0.1:14560 · 수신 N / 손상 M (미지원 K)` / 수신기 없음 |
 
@@ -234,7 +234,7 @@ flowchart LR
 
 ### 한계
 
-- **소스 전환은 Play 시작 전 설정 기준**이다. 전환 시 스토어·목록을 초기화하지 않아 Play 중 전환하면 이전 소스의 유닛이 두절로 남는다(6단계 후보).
+- 소스 전환은 Play 중에도 된다(6단계 ①). `TelemetrySourceSelector.SetMode`가 이전 소스 구독 해제 → 바인더 `ResetUnit()` → `UnitRegistry.ResetUnits()` → 새 소스 켜기 순서로 진행한다. 초기화가 새 소스를 켜는 것보다 먼저여야 가짜 GPS가 켜질 때 바로 내보내는 첫 샘플이 지워지지 않는다. 카메라 `RenderTexture`는 `UnitCameraRig`가 소유하므로 레지스트리는 참조만 버리고 리그가 GPU 자원만 해제한다.
 - 지원 메시지는 HEARTBEAT·GLOBAL_POSITION_INT뿐이다. 미지원 메시지의 헤더는 CRC를 검증하지 못한다(CRC_EXTRA를 모름).
 - 지상 유닛은 샘플러 높이와 렌더된 LOD 메시의 차이로 약 ±4m 뜨거나 파묻혀 보일 수 있다.
 - 한 번도 수신하지 못한 유닛은 목록에 없다(첫 샘플에서 등록). 테이블 기반 사전 등록은 미구현이다.
