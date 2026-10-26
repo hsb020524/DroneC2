@@ -86,6 +86,95 @@ namespace DroneC2.Tests
         }
 
         [Test]
+        public void ResetPlacement_HidesRenderersAgain_AndClearsHasTarget()
+        {
+            DroneView v = CreateWithChildren(out MeshRenderer model, out LineRenderer line, out MeshRenderer off);
+            try
+            {
+                v.SetTarget(Vector3.one, Quaternion.identity);
+                Assert.IsTrue(model.enabled);
+
+                v.ResetPlacement();
+
+                Assert.IsFalse(v.HasTarget);
+                Assert.IsFalse(model.enabled);
+                Assert.IsFalse(line.enabled);
+                Assert.IsFalse(off.enabled);
+
+                v.SetTarget(Vector3.zero, Quaternion.identity);
+
+                Assert.IsTrue(model.enabled);
+                Assert.IsTrue(line.enabled);
+                Assert.IsFalse(off.enabled, "원래 꺼져 있던 렌더러는 초기화 뒤에도 켜지지 않는다.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(extra);
+            }
+        }
+
+        [Test]
+        public void ResetPlacement_NextTarget_PlacesImmediately()
+        {
+            view.SetTarget(new Vector3(100f, 0f, 0f), Quaternion.identity);
+            view.ResetPlacement();
+
+            var position = new Vector3(-5f, 7f, 9f);
+            view.SetTarget(position, Quaternion.identity);
+
+            Assert.IsTrue(view.HasTarget);
+            Assert.AreEqual(0f, (go.transform.position - position).magnitude, 1e-4f);
+        }
+
+        [Test]
+        public void ResetPlacement_RaisesPlacementReset()
+        {
+            int raised = 0;
+            view.PlacementReset += () => raised++;
+
+            view.ResetPlacement();
+
+            Assert.AreEqual(1, raised);
+        }
+
+        [Test]
+        public void ResetPlacement_ClearsPathTrail()
+        {
+            var root = new GameObject("Unit");
+            try
+            {
+                DroneView v = root.AddComponent<DroneView>();
+                var trailObject = new GameObject("PathTrail");
+                trailObject.transform.SetParent(root.transform);
+                LineRenderer line = trailObject.AddComponent<LineRenderer>();
+                PathTrail trail = trailObject.AddComponent<PathTrail>();
+
+                var so = new UnityEditor.SerializedObject(trail);
+                so.FindProperty("target").objectReferenceValue = root.transform;
+                so.ApplyModifiedPropertiesWithoutUndo();
+
+                // EditMode에서는 Awake·OnEnable이 자동으로 돌지 않으므로 직접 호출한다.
+                const System.Reflection.BindingFlags flags =
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+                typeof(DroneView).GetMethod("Awake", flags).Invoke(v, null);
+                typeof(PathTrail).GetMethod("Awake", flags).Invoke(trail, null);
+                typeof(PathTrail).GetMethod("OnEnable", flags).Invoke(trail, null);
+
+                v.SetTarget(Vector3.zero, Quaternion.identity);
+                typeof(PathTrail).GetMethod("LateUpdate", flags).Invoke(trail, null);
+                Assert.AreEqual(1, line.positionCount);
+
+                v.ResetPlacement();
+
+                Assert.AreEqual(0, line.positionCount);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void HasTarget_IsFalse_BeforeFirstTarget()
         {
             Assert.IsFalse(view.HasTarget);

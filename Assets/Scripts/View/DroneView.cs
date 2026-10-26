@@ -43,6 +43,22 @@ namespace DroneC2.View
             hiddenRenderers = list.ToArray();
         }
 
+        /// <summary>배치가 취소되었을 때(<see cref="ResetPlacement"/>). 경로선처럼 위치 기록을 가진 쪽이 비운다.</summary>
+        public event System.Action PlacementReset;
+
+        /// <summary>
+        /// 배치를 취소하고 첫 목표를 받기 전 상태로 돌린다(소스 전환). 현재 켜져 있는 자식 렌더러를 다시 숨기고
+        /// 다음 <see cref="SetTarget"/>이 보간 없이 바로 배치한다.
+        /// </summary>
+        public void ResetPlacement()
+        {
+            hasTarget = false;
+            velocity = Vector3.zero;
+            hiddenRenderers = null;
+            HideUntilPlaced();
+            PlacementReset?.Invoke();
+        }
+
         public void SetTarget(Vector3 position, Quaternion rotation)
         {
             targetPosition = position;

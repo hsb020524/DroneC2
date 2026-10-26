@@ -35,6 +35,18 @@ namespace DroneC2.View
                 targetView = target.GetComponent<DroneView>();
         }
 
+        void OnEnable()
+        {
+            if (targetView != null)
+                targetView.PlacementReset += Clear;
+        }
+
+        void OnDisable()
+        {
+            if (targetView != null)
+                targetView.PlacementReset -= Clear;
+        }
+
         void LateUpdate()
         {
             if (target == null)
@@ -60,7 +72,8 @@ namespace DroneC2.View
         public void Clear()
         {
             points.Clear();
-            line.positionCount = 0;
+            if (line != null)
+                line.positionCount = 0;
         }
 
         void Apply()
