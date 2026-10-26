@@ -57,6 +57,73 @@ namespace DroneC2.Tests
         }
 
         [Test]
+        public void Clear_RemovesUnitsAndRaisesCleared()
+        {
+            var store = new UnitStateStore();
+            store.Report(Sample("UAV-01"), Vector3.zero, 0.0);
+            store.Report(Sample("TNK-01", UnitKind.Tank), Vector3.zero, 0.0);
+            int cleared = 0;
+            store.Cleared += () => cleared++;
+
+            store.Clear();
+
+            Assert.AreEqual(0, store.Units.Count);
+            Assert.IsFalse(store.TryGet("UAV-01", out _));
+            Assert.AreEqual(1, cleared);
+        }
+
+        [Test]
+        public void Clear_ReleasesSelectionAndPin()
+        {
+            var store = new UnitStateStore();
+            store.Report(Sample("UAV-01"), Vector3.zero, 0.0);
+            store.Report(Sample("UAV-02"), Vector3.zero, 0.0);
+            store.Select("UAV-01");
+            store.Pin("UAV-02");
+            var selections = new List<string>();
+            var pins = new List<string>();
+            store.SelectionChanged += id => selections.Add(id ?? "<null>");
+            store.PinnedChanged += id => pins.Add(id ?? "<null>");
+
+            store.Clear();
+
+            Assert.IsNull(store.SelectedId);
+            Assert.IsNull(store.PinnedId);
+            CollectionAssert.AreEqual(new[] { "<null>" }, selections);
+            CollectionAssert.AreEqual(new[] { "<null>" }, pins);
+        }
+
+        [Test]
+        public void Clear_WithoutSelection_DoesNotRaiseSelectionEvents()
+        {
+            var store = new UnitStateStore();
+            store.Report(Sample("UAV-01"), Vector3.zero, 0.0);
+            int raised = 0;
+            store.SelectionChanged += _ => raised++;
+            store.PinnedChanged += _ => raised++;
+
+            store.Clear();
+
+            Assert.AreEqual(0, raised);
+        }
+
+        [Test]
+        public void Report_AfterClear_AddsUnitAgain()
+        {
+            var store = new UnitStateStore();
+            store.Report(Sample("UAV-01"), Vector3.zero, 0.0);
+            store.Clear();
+            var added = new List<string>();
+            store.UnitAdded += s => added.Add(s.Id);
+
+            store.Report(Sample("UAV-01"), Vector3.zero, 1.0);
+
+            CollectionAssert.AreEqual(new[] { "UAV-01" }, added);
+            Assert.AreEqual(1, store.Units.Count);
+            Assert.IsTrue(store.Select("UAV-01"));
+        }
+
+        [Test]
         public void Report_EmptyId_IsIgnored()
         {
             var store = new UnitStateStore();

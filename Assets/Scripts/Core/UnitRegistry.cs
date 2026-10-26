@@ -28,6 +28,17 @@ namespace DroneC2.Core
             Store.Tick(Time.timeAsDouble);
         }
 
+        /// <summary>
+        /// 등록된 유닛을 모두 잊는다(소스 전환). 카메라 텍스처는 <c>UnitCameraRig</c>가 소유하므로
+        /// 여기서는 참조만 버리고 해제하지 않는다. 바인더가 다음 샘플에서 다시 등록한다.
+        /// </summary>
+        public void ResetUnits()
+        {
+            Store.Clear();
+            views.Clear();
+            cameraTextures.Clear();
+        }
+
         /// <summary>유닛의 표시 Transform을 등록한다. 카메라 추적처럼 Transform이 필요한 곳에서 조회한다.</summary>
         public void RegisterView(string unitId, Transform view)
         {

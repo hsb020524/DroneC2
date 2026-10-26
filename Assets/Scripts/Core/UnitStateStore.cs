@@ -81,6 +81,9 @@ namespace DroneC2.Core
         /// <summary>고정이 바뀌었을 때. 고정 해제는 null.</summary>
         public event Action<string> PinnedChanged;
 
+        /// <summary>모든 유닛이 비워졌을 때(<see cref="Clear"/>).</summary>
+        public event Action Cleared;
+
         public bool TryGet(string id, out UnitState state)
         {
             if (id == null)
@@ -187,6 +190,27 @@ namespace DroneC2.Core
 
             PinnedId = null;
             PinnedChanged?.Invoke(null);
+        }
+
+        /// <summary>
+        /// 모든 유닛과 선택·고정을 비운다(소스 전환). 선택·고정이 있었다면 해제 이벤트를 먼저 내고
+        /// 마지막에 <see cref="Cleared"/>를 낸다. 두절 판정 시간은 유지한다.
+        /// </summary>
+        public void Clear()
+        {
+            bool hadSelection = SelectedId != null;
+            bool hadPin = PinnedId != null;
+
+            SelectedId = null;
+            PinnedId = null;
+            units.Clear();
+            byId.Clear();
+
+            if (hadSelection)
+                SelectionChanged?.Invoke(null);
+            if (hadPin)
+                PinnedChanged?.Invoke(null);
+            Cleared?.Invoke();
         }
 
         public void ClearSelection()
