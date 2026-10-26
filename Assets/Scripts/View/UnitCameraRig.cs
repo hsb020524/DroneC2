@@ -57,6 +57,17 @@ namespace DroneC2.View
             }
         }
 
+        /// <summary>
+        /// 렌더를 멈추고 GPU 메모리를 돌려준다(소스 전환). 텍스처 객체는 남기므로 다시 렌더하면 자동으로 재생성되고,
+        /// 완전한 파괴는 <see cref="OnDestroy"/>가 한다.
+        /// </summary>
+        public void ReleaseTexture()
+        {
+            SetRendering(false);
+            if (texture != null)
+                texture.Release();
+        }
+
         public void SetRendering(bool value)
         {
             if (unitCamera == null || texture == null || unitCamera.enabled == value)

@@ -59,6 +59,22 @@ namespace DroneC2.Core
             }
         }
 
+        /// <summary>
+        /// 이 유닛이 이전 소스에서 받은 모든 것을 잊는다(소스 전환): 유닛 id, 홈 지형 캐시, 3D 표시·경로선, 마커 선택,
+        /// 카메라 렌더와 텍스처. 구독은 건드리지 않으며 다음 샘플이 오면 처음부터 다시 배치한다.
+        /// 레지스트리는 선택기가 한 번에 비운다.
+        /// </summary>
+        public void ResetUnit()
+        {
+            unitId = null;
+            warnedMissingHome = false;
+            altitudeResolver = new AltitudeResolver(converterBehaviour as ITerrainHeightSampler);
+            marker?.SetSelected(false);
+            cameraRig?.ReleaseTexture();
+            if (view != null)
+                view.ResetPlacement();
+        }
+
         void OnValidate()
         {
             if (sourceBehaviour != null && !(sourceBehaviour is ITelemetrySource))

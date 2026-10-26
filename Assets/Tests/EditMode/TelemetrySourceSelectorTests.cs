@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using DroneC2.Core;
 using DroneC2.DataSource;
 using DroneC2.DataSource.Mavlink;
+using DroneC2.View;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -145,6 +146,106 @@ namespace DroneC2.Tests
             Assert.IsFalse(unit.mavlink.enabled);
             Assert.AreSame(unit.fake, unit.binder.CurrentSource);
             Assert.IsFalse(receiver.enabled);
+        }
+
+        static TelemetrySample Sample(string id)
+        {
+            return new TelemetrySample(id, 35.0, -83.0, 80.0, AltitudeMode.Absolute, 90.0, 10.0, 0.0,
+                UnitKind.Drone, ReportedStatus.Normal);
+        }
+
+        UnitRegistry NewRegistry(TelemetrySourceSelector selector)
+        {
+            var registry = NewObject("Registry").AddComponent<UnitRegistry>();
+            var so = new SerializedObject(selector);
+            so.FindProperty("registry").objectReferenceValue = registry;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return registry;
+        }
+
+        DroneView AttachView(UnitTelemetryBinder binder)
+        {
+            var view = binder.gameObject.AddComponent<DroneView>();
+            var so = new SerializedObject(binder);
+            so.FindProperty("view").objectReferenceValue = view;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return view;
+        }
+
+        [Test]
+        public void SetMode_Switch_ClearsRegistryUnitsAndSelection()
+        {
+            var unit = NewUnit("UAV-01");
+            MavlinkReceiver receiver = NewReceiver(false);
+            TelemetrySourceSelector selector = NewSelector(TelemetrySourceMode.FakeGps, receiver);
+            UnitRegistry registry = NewRegistry(selector);
+            selector.Apply();
+            registry.Store.Report(Sample("UAV-01"), Vector3.zero, 0.0);
+            registry.RegisterView("UAV-01", unit.binder.transform);
+            registry.Store.Select("UAV-01");
+
+            selector.SetMode(TelemetrySourceMode.Mavlink);
+
+            Assert.AreEqual(0, registry.Store.Units.Count);
+            Assert.IsNull(registry.Store.SelectedId);
+            Assert.IsFalse(registry.TryGetView("UAV-01", out _));
+            Assert.AreSame(unit.mavlink, unit.binder.CurrentSource);
+            Assert.IsTrue(receiver.enabled);
+        }
+
+        [Test]
+        public void SetMode_Switch_HidesUnitViewsAgain()
+        {
+            var unit = NewUnit("UAV-01");
+            DroneView view = AttachView(unit.binder);
+            TelemetrySourceSelector selector = NewSelector(TelemetrySourceMode.FakeGps, NewReceiver(false));
+            NewRegistry(selector);
+            selector.Apply();
+            view.SetTarget(Vector3.one, Quaternion.identity);
+
+            selector.SetMode(TelemetrySourceMode.Mavlink);
+
+            Assert.IsFalse(view.HasTarget);
+        }
+
+        [Test]
+        public void SetMode_SameMode_DoesNothing()
+        {
+            NewUnit("UAV-01");
+            TelemetrySourceSelector selector = NewSelector(TelemetrySourceMode.FakeGps, NewReceiver(false));
+            UnitRegistry registry = NewRegistry(selector);
+            selector.Apply();
+            registry.Store.Report(Sample("UAV-01"), Vector3.zero, 0.0);
+
+            selector.SetMode(TelemetrySourceMode.FakeGps);
+
+            Assert.AreEqual(1, registry.Store.Units.Count);
+        }
+
+        [Test]
+        public void Apply_AtStartup_DoesNotClearRegistry()
+        {
+            NewUnit("UAV-01");
+            TelemetrySourceSelector selector = NewSelector(TelemetrySourceMode.FakeGps, NewReceiver(false));
+            UnitRegistry registry = NewRegistry(selector);
+            registry.Store.Report(Sample("UAV-01"), Vector3.zero, 0.0);
+
+            selector.Apply();
+
+            Assert.AreEqual(1, registry.Store.Units.Count);
+        }
+
+        [Test]
+        public void SetMode_Switch_WithoutRegistry_WarnsButStillSwitches()
+        {
+            var unit = NewUnit("UAV-01");
+            TelemetrySourceSelector selector = NewSelector(TelemetrySourceMode.FakeGps, NewReceiver(false));
+            selector.Apply();
+
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("레지스트리"));
+            selector.SetMode(TelemetrySourceMode.Mavlink);
+
+            Assert.AreSame(unit.mavlink, unit.binder.CurrentSource);
         }
 
         [Test]

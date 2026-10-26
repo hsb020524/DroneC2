@@ -59,19 +59,35 @@ namespace DroneC2.DataSource
         double sinceLastSample;
         double startTime;
 
+        bool started;
+
         void Start()
         {
-            if (scenarioJson != null && !ApplyScenario())
+            if (!Begin())
             {
                 enabled = false;
                 return;
             }
+            started = true;
+        }
+
+        // 소스 전환으로 다시 켜지면 시나리오를 처음부터 다시 시작한다. (꺼져 있던 동안의 진행이 남지 않게)
+        // 처음 켜질 때는 Start가 시작하므로 여기서는 하지 않는다.
+        void OnEnable()
+        {
+            if (started && !Begin())
+                enabled = false;
+        }
+
+        bool Begin()
+        {
+            if (scenarioJson != null && !ApplyScenario())
+                return false;
 
             if (waypoints.Count < 2)
             {
                 Debug.LogError("FakeGpsSource: 웨이포인트가 2개 이상 필요합니다.", this);
-                enabled = false;
-                return;
+                return false;
             }
 
             latitude = waypoints[0].latitude;
@@ -79,8 +95,10 @@ namespace DroneC2.DataSource
             targetIndex = 1;
             headingDeg = BearingTo(waypoints[targetIndex]);
             sampleInterval = 1.0 / sampleRateHz;
+            sinceLastSample = 0.0;
             startTime = Time.timeAsDouble;
             Emit();
+            return true;
         }
 
         bool ApplyScenario()

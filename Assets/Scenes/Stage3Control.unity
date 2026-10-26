@@ -1133,6 +1133,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DroneC2.Runtime::DroneC2.Core.TelemetrySourceSelector
   mode: 0
   receiver: {fileID: 1440962822}
+  registry: {fileID: 317126808}
 --- !u!4 &664674969
 Transform:
   m_ObjectHideFlags: 0
