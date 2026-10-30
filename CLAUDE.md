@@ -28,12 +28,14 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
   - Play 측정(에디터): 5기+선택·고정 상태에서 `SetMode(Mavlink)` → 유닛 0, 선택·고정 null, 배치 0, 활성 렌더러 0, 렌더 중 카메라 0, 목록 0행("유닛 목록 (0)"), 텍스처 5개 모두 해제. 에미터(sysid 1·2)를 보내자 UAV-01·02만 등장(미등록 sysid 0, 가짜 잔상 없음). `SetMode(FakeGps)`로 되돌리면 5기가 즉시 복구되고 수신 소켓이 닫힌다. 전환 12회 반복 후에도 전체 `RenderTexture` 수는 31개로 같았고(유닛 카메라 5개), 해제된 텍스처는 유닛을 선택하면 다시 만들어졌다. 콘솔 error·warning 0건. 씬은 모드를 바꾼 채 저장하지 않았다(기본 FakeGps; 스크린샷·GIF도 모드 값만 바꾸고 씬 저장 없이 Play). 남은 한계는 "한 번도 수신하지 못한 유닛은 목록에 나타나지 않음"(후보 ⑤).
   - 문서(README·requirements·architecture)는 이에 맞춰 수정했고, devlog의 5단계 기록은 당시 사실이라 남기되 6단계 ①에서 해소했다고 덧붙였다. 6단계 devlog 정리는 단계가 끝날 때 한다.
 - 6단계 후보(우선순위 순): ① ~~소스 전환 시 스토어·목록 초기화~~(완료) ② TNK 경로를 OpenStreetMap 도로 데이터로 만들기(ODbL 출처 표기 필요, 변환 스크립트는 `tools/`에) ③ 두절 상태에서 상세 패널의 속도·위치가 마지막 값 그대로(예: 25.0 m/s) 보여 운용자가 현재 값으로 오해할 수 있음 → 두절일 때 흐리게 하거나 "마지막 값"으로 표시 ④ 지상 유닛 높이를 물리 메시 레이캐스트로 정하고 타일이 없으면 샘플러로 대체(콜라이더 비용·LOD 전환 시 높이 튐 평가 필요, 현재 약 ±4m) ⑤ 테이블 기반 유닛 사전 등록(수신 전 두절 표시) ⑥ 전차(Rover) SITL 확인 ⑦ 지표 높이 캐시 상한
-- **재개 지점(2026-10-26 종료 시점, 로컬 커밋 `cf15354`까지, push 안 함)**:
-  1. 테스트 전체 확인: EditMode 175건은 통과했으나 PlayMode 등 다른 테스트와 `Packages/manifest.json` 고정(MCP `aa5fc63`) 후 새 클론에서의 패키지 해석은 확인하지 않았다.
-  2. 콘솔 경고 4건 정리: 테스트 실행 중 `TelemetrySourceSelector` 오류 경로 테스트가 경고·오류 로그("MavlinkUnitSource가 없어 전환하지 못했습니다", "MAVLink 모드에는 수신기가 필요합니다", "레지스트리가 없어…", "Other은(는) ITelemetrySource를 구현하지 않습니다")를 내는 것으로 보인다. 해당 테스트에 `LogAssert.Expect`를 추가해 의도된 로그로 처리하고, 정말 테스트 유래인지 먼저 확인한다.
-  3. devlog에 cp949 사례 기록: `tools/requirements.txt`의 UTF-8 한글 주석이 한국어 Windows에서 `pip install -r`을 실패시켰고(기존 venv로 테스트해 가려짐), 새 venv 검증에서 발견해 ASCII로 고침. 6단계 정리 때 devlog에 넣거나 단계 밖 짧은 메모로 남긴다.
-  4. 클론 폴더 재확인: `C:\UnityProjects\DroneC2-clonetest`(안의 `Assets/CesiumSettings`에 토큰이 있으니 건드리지 않는다)에서 수정된 README대로 다시 따라 해 본다(MCP 고정 커밋 해석, 새 안내 문구 포함). 끝나면 위 "클론해서 확인" 체크박스를 닫는다.
-  5. push: 위 확인 후 푸시 전 검사(JWT `eyJ…`, `Assets/CesiumSettings` 경로 0건) → 사용자 확인 → push. 지금까지 `cf15354`와 그 앞 커밋들이 푸시 전이다.
+- **재개 지점(2026-10-31 종료 시점, 푸시 전 로컬 커밋은 `origin/main`보다 앞선 상태, push 안 함)**:
+  - 끝난 것: 콘솔 경고 4건은 `LogAssert.Expect`가 이미 걸린 테스트의 의도된 로그라 코드 수정 불필요(Expect는 실패만 막고 콘솔 출력은 남김). devlog에 cp949 사례와 MCP 끊김 메모를 넣었다(5단계 "남은 과제" 뒤 "메모: 새 환경 점검에서 발견한 문제"). 클론 재확인에서 pull·Safe Mode 없음·MCP 10.3.0 고정 해석은 확인됨.
+  - **MCP for Unity 끊김(실측 확정):** 서버가 꺼져 있고 MCP 창이 열려 있으면 Play 중 EditorLoop가 약 276ms 멈춘다(창을 닫으면 사라짐). 원인은 창의 2초 주기 `IsLocalHttpServerReachable()`이 메인 스레드에서 `ConnectAsync().Wait(250ms)`를 하는 것. 창이 처음에 열려 있게 된 경로는 미확정(패키지에 메인 창 자동 열기 코드 없음, PC 전역 레이아웃 상속 가설은 미검증). **결정: C안.** `Packages/manifest.json`과 `packages-lock.json`에서 `com.coplaydev.unity-mcp`를 제외하고, README의 MCP 알림 문단을 "개발 도구로 쓰려면 이 줄을 추가"로 바꾼다(프로젝트 코드는 패키지에 의존하지 않음). 내 개발 PC는 로컬에서만 패키지를 유지한다(`git update-index --skip-worktree`, pull 충돌 주의). 개발 도구로 쓸 때 서버를 안 켜면 창을 닫으라는 한 줄도 README에 넣는다.
+  1. C안 적용: manifest·lock 수정, README 수정, 컴파일 오류 0건·EditMode 175건 확인.
+  2. 상위 저장소 이슈 초안을 임시 폴더에서 `C:\UnityProjects\DroneC2-tools\notes`로 옮긴다. 원본: `<임시 폴더>\unity-mcp-issue-draft.md`(임시 폴더라 사라질 수 있으니 먼저 옮긴다). 제출 여부는 사용자가 결정한다.
+  3. README에 Cesium for Unity "Signature Missing" 경고가 정상이라는 한 줄을 추가한다.
+  4. 클론 폴더 재확인 마무리: `C:\UnityProjects\DroneC2-clonetest`(안의 `Assets/CesiumSettings`에 토큰이 있으니 건드리지 않는다)에서 C안 반영본을 pull해 MCP 없이 열어 Play해도 끊기지 않는지, README 안내가 맞는지 확인한다. 끝나면 위 "클론해서 확인" 체크박스를 닫는다.
+  5. push: 위 확인 후 푸시 전 검사(JWT `eyJ…`, `Assets/CesiumSettings` 경로 0건) → 사용자 확인 → push.
   6. 이후 6단계 범위는 정해지지 않았다. 시작 전에 사용자와 범위를 정한다(후보 ②③ 포함 위 목록).
   - 시연 지역: 그레이트 스모키 산맥 국립공원(미국). 보안상 국내 지역(특히 접경 지역)은 의도적으로 제외했고, 한국 산악 지형과 고도(최고 약 2,000m)·숲 능선이 유사해 대체 지역으로 선정했다.
   - Cesium ion 토큰: DroneC2 전용 토큰, 권한 `assets:read`만, 접근 대상은 필요한 지형·이미지 에셋으로 제한. `Assets/CesiumSettings/`는 통째로 `.gitignore` 처리(커밋 금지, `ion.cesium.com.asset`·`CesiumRuntimeSettings.asset`에 토큰 필드가 있음). 토큰은 채팅에 붙여넣지 않고 사용자가 Unity Cesium 패널에서 직접 연결한다. README에는 본인 토큰을 넣어 실행하라는 안내를 쓴다.
