@@ -433,7 +433,7 @@ PrefabInstance:
     - target: {fileID: 3557405060091325441, guid: ec4f9eabe99e98b47bb9b60185b78f52, type: 3}
       propertyPath: scenarioJson
       value: 
-      objectReference: {fileID: 4900000, guid: 6c8a0fc54a36f0e43b79a796ce8da5d1, type: 3}
+      objectReference: {fileID: 4900000, guid: 369bc8e2531b415bb62cdb7ddc697e58, type: 3}
     - target: {fileID: 3557405060091325441, guid: ec4f9eabe99e98b47bb9b60185b78f52, type: 3}
       propertyPath: waypoints.Array.size
       value: 58
@@ -986,7 +986,7 @@ PrefabInstance:
     - target: {fileID: 3557405060091325441, guid: ec4f9eabe99e98b47bb9b60185b78f52, type: 3}
       propertyPath: scenarioJson
       value: 
-      objectReference: {fileID: 4900000, guid: 6c8a0fc54a36f0e43b79a796ce8da5d1, type: 3}
+      objectReference: {fileID: 4900000, guid: 369bc8e2531b415bb62cdb7ddc697e58, type: 3}
     - target: {fileID: 3557405060091325441, guid: ec4f9eabe99e98b47bb9b60185b78f52, type: 3}
       propertyPath: warningStartSec
       value: 30

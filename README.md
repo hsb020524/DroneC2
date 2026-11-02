@@ -36,7 +36,7 @@ Cesium World Terrain 위에 위경도 기준으로 드론을 배치하고, 지�
 
 ### 4단계 — 카메라 패널
 
-유닛마다 가상 카메라(드론은 기수 앞 30° 하향, 전차는 차체 전방)를 달고, 선택한 유닛의 영상을 패널에 표시합니다. `고정`으로 한 유닛을 패널에 남겨 두면 두 유닛을 동시에 볼 수 있습니다. 카메라는 선택·고정된 유닛만 렌더하며, 렌더 중인 카메라만 Cesium 타일 선택에 등록해 타일 부담을 패널 수로 묶었습니다. 경로·고도·속도는 시나리오 JSON(`Assets/Scenarios/stage3-demo.json`)으로 읽습니다.
+유닛마다 가상 카메라(드론은 기수 앞 30° 하향, 전차는 차체 전방)를 달고, 선택한 유닛의 영상을 패널에 표시합니다. `고정`으로 한 유닛을 패널에 남겨 두면 두 유닛을 동시에 볼 수 있습니다. 카메라는 선택·고정된 유닛만 렌더하며, 렌더 중인 카메라만 Cesium 타일 선택에 등록해 타일 부담을 패널 수로 묶었습니다. 경로·고도·속도는 시나리오 JSON으로 읽습니다. 드론은 `Assets/Scenarios/stage3-demo.json`, 전차는 OpenStreetMap 도로에서 만든 `Assets/Scenarios/osm-roads-tnk.json`입니다(출처·라이선스는 아래 "데이터 출처와 라이선스").
 
 ![4단계 결과 GIF](docs/images/stage4-camera-panel.gif)
 
@@ -143,7 +143,7 @@ flowchart LR
 python -m venv C:\UnityProjects\DroneC2-tools\venv
 C:\UnityProjects\DroneC2-tools\venv\Scripts\python.exe -m pip install -r tools/requirements.txt
 
-# Unity가 MAVLink 모드로 Play 중일 때 저장소 루트에서 실행한다. (5기, 시나리오 stage3-demo.json 재생)
+# Unity가 MAVLink 모드로 Play 중일 때 저장소 루트에서 실행한다. (5기, 시나리오 stage3-demo.json(드론)·osm-roads-tnk.json(전차) 재생)
 C:\UnityProjects\DroneC2-tools\venv\Scripts\python.exe tools/mavlink_emitter.py --duration 75
 ```
 
@@ -191,7 +191,7 @@ Unity의 Test Runner(`Window > General > Test Runner`)에서 EditMode를 실행�
 - **기준점**: 계획 검토 때 1단계 기준점을 실제 시설과 무관한 중립 좌표(공해상)로 바꿨습니다.
 - **표시 설계**: 드론을 확대해 보여줄 때 루트 스케일을 키우지 않고 시각 요소(`Body`, `Nose`)만 키우도록 설계를 지정했습니다. 위치·회전 데이터와 표시를 분리하기 위해서입니다.
 - **도구화**: GIF 녹화를 일회성 작업이 아니라 이후 단계에서 재사용할 수 있는 도구로 남기도록 바꿨습니다.
-- **전차 경로**: 도로에 억지로 맞추지 않고, 전차는 야지 주행도 하므로 지형 경사 분석 결과(최대 경사 15° 수준)만 한계로 기록하기로 판단했습니다.
+- **전차 경로**: 5단계까지는 도로에 억지로 맞추지 않고 야지 주행으로 보아 지형 경사 분석 결과(최대 경사 15° 수준)만 한계로 기록했습니다. 6단계에서 OpenStreetMap의 실제 도로 선으로 경로를 다시 만들었습니다.
 - **시연 지역**: 보안상 접경 지역을 포함한 국내 지역을 제외하고, 지형이 유사한 해외 국립공원(그레이트 스모키 산맥)을 선정했습니다.
 - **비밀 값**: 로그로 노출된 Cesium ion 토큰은 즉시 재발급해 다시 연결했습니다.
 - **검증**: 단계마다 테스트와 diff로 결과를 확인했습니다.
@@ -201,6 +201,14 @@ Unity의 Test Runner(`Window > General > Test Runner`)에서 EditMode를 실행�
 - 작업을 작은 단위로 나눠 진행하고 단위마다 씬을 저장한 뒤 커밋했습니다.
 - 단계가 끝날 때마다 구현 요약, 검증 결과, 겪은 문제와 해결을 [docs/devlog.md](docs/devlog.md)에 정리했습니다.
 - 비밀 값은 저장소에 포함하지 않으며, 푸시 전에 커밋에서 토큰 형태 문자열을 검사했습니다.
+
+## 데이터 출처와 라이선스
+
+- **지형·영상:** Cesium World Terrain과 Bing Maps Aerial을 Cesium ion으로 받습니다. 화면의 크레딧은 이용 약관상 유지해야 합니다.
+- **전차 경로(OpenStreetMap):** 전차(TNK-01·02) 경로는 OpenStreetMap의 도로 `Kuwohi Access Road`에서 만든 파생 데이터입니다. **© OpenStreetMap contributors**, [Open Database License(ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/)으로 제공됩니다. 저작권·라이선스 안내는 <https://www.openstreetmap.org/copyright>를 참고하세요.
+  - 경로 파일 `Assets/Scenarios/osm-roads-tnk.json`은 OSM 데이터에서 파생한 데이터베이스라서 ODbL(출처 표기, 같은 조건으로 공유)을 따릅니다. 프로젝트의 나머지 코드·시나리오와 섞이지 않도록 별도 파일로 분리했고, 파일 안에도 출처 문구(`attribution`)와 OSM 데이터 기준 시각이 들어 있습니다.
+  - 원본 응답(`tools/osm/roads-raw.json`)과 질의문(`tools/osm/roads.overpassql`), 변환 스크립트(`tools/osm_to_scenario.py`)를 함께 두어 같은 결과를 다시 만들 수 있습니다. 자세한 내용은 `tools/osm/README.md`를 보세요.
+  - 전차와 모든 유닛은 가상입니다. 도로 좌표는 공개 지도 데이터이며 실제 시설이나 군사 자료가 아닙니다.
 
 ## 보안 원칙
 

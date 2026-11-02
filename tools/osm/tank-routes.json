@@ -1,0 +1,21 @@
+{
+  "wayId": 19607229,
+  "startNear": { "latitude": 35.5583931, "longitude": -83.4936664 },
+  "simplifyToleranceM": 1.5,
+  "units": [
+    {
+      "id": "TNK-01",
+      "fromM": 0,
+      "toM": 1000,
+      "speedMps": 12,
+      "warning": { "startSec": 0, "durationSec": 0 }
+    },
+    {
+      "id": "TNK-02",
+      "fromM": 1100,
+      "toM": 1500,
+      "speedMps": 8,
+      "warning": { "startSec": 30, "durationSec": 25 }
+    }
+  ]
+}
