@@ -1,0 +1,129 @@
+#!/usr/bin/env python
+"""전차 경로가 OSM 도로 위에 있는지 측정한다. 표준 라이브러리만 쓴다.
+
+시나리오의 각 유닛을 PathFollower로 재생(기본 10 Hz, 2바퀴)하고, 샘플마다 OSM 도로 선
+(roads-raw.json의 way 원본 노드 전체)까지의 최단 거리(m)를 구해 평균·95%·최대를 보고한다.
+지형 경사는 Unity에서 받은 지형 높이(Temp/road-probe.csv)가 있을 때 --heights로 함께 계산한다.
+
+사용 예 (저장소 루트에서):
+  python tools/measure_road_deviation.py
+  python tools/measure_road_deviation.py --heights Temp/road-probe.csv
+"""
+
+import argparse
+import csv
+import json
+import math
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from path_follower import EARTH_RADIUS_M, PathFollower  # noqa: E402
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def road_polyline(raw_path, way_id):
+    with open(raw_path, encoding="utf-8") as f:
+        for e in json.load(f)["elements"]:
+            if e["type"] == "way" and e["id"] == way_id:
+                return [(p["lat"], p["lon"]) for p in e["geometry"]]
+    raise SystemExit("way %d 없음" % way_id)
+
+
+def distance_to_polyline_m(lat, lon, poly):
+    """점에서 폴리라인까지의 최단 거리(m). 점 위도 기준 평면 근사."""
+    cos = math.cos(math.radians(lat))
+    k_n = math.radians(1.0) * EARTH_RADIUS_M
+    k_e = k_n * cos
+    best = float("inf")
+    prev = None
+    for p in poly:
+        cur = ((p[1] - lon) * k_e, (p[0] - lat) * k_n)
+        if prev is not None:
+            ax, ay = prev
+            bx, by = cur
+            dx, dy = bx - ax, by - ay
+            norm = dx * dx + dy * dy
+            t = 0.0 if norm == 0.0 else max(0.0, min(1.0, -(ax * dx + ay * dy) / norm))
+            best = min(best, math.hypot(ax + t * dx, ay + t * dy))
+        prev = cur
+    return best
+
+
+def percentile(values, q):
+    s = sorted(values)
+    return s[min(len(s) - 1, int(len(s) * q))]
+
+
+def measure_deviation(scenario_path, poly, rate_hz, laps):
+    with open(scenario_path, encoding="utf-8") as f:
+        units = json.load(f)["units"]
+    results = {}
+    for u in units:
+        follower = PathFollower([(p["latitude"], p["longitude"]) for p in u["waypoints"]])
+        speed = float(u["speedMps"])
+        duration = follower.total_length_m * laps / speed
+        n = int(duration * rate_hz)
+        dev = []
+        for i in range(n + 1):
+            lat, lon, _ = follower.position(speed * i / rate_hz)
+            dev.append(distance_to_polyline_m(lat, lon, poly))
+        results[u["id"]] = (dev, follower.total_length_m, speed)
+    return results
+
+
+def report_deviation(results, rate_hz):
+    print("== 도로 이탈 거리 (OSM 도로 선까지 최단 거리) ==")
+    for unit_id, (dev, length, speed) in results.items():
+        print("%s: 샘플 %d개(%.0f Hz), 한 바퀴 %.0f m / %.0f m/s | 평균 %.2f m, 95%% %.2f m, 최대 %.2f m | 1m 초과 %d개, 3m 초과 %d개" % (
+            unit_id, len(dev), rate_hz, length, speed, sum(dev) / len(dev), percentile(dev, 0.95), max(dev),
+            sum(1 for d in dev if d > 1.0), sum(1 for d in dev if d > 3.0)))
+
+
+def report_slope(heights_path):
+    rows = {}
+    with open(heights_path, encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            rows.setdefault(r["unit"], []).append(r)
+    print("== 지형 경사 (Cesium 지형 높이, 경로를 따라 인접 조회점 사이) ==")
+    for unit_id, items in rows.items():
+        ok = [r for r in items if r["success"] == "1"]
+        slopes = []
+        for a, b in zip(ok, ok[1:]):
+            run = float(b["distanceM"]) - float(a["distanceM"])
+            if run <= 0:
+                continue
+            rise = float(b["ellipsoidHeightM"]) - float(a["ellipsoidHeightM"])
+            slopes.append((math.degrees(math.atan2(abs(rise), run)), a, b))
+        worst = max(slopes, key=lambda s: s[0])
+        degs = [s[0] for s in slopes]
+        spacing = float(items[1]["distanceM"]) - float(items[0]["distanceM"])
+        print("%s: 조회 %d점(성공 %d, 간격 %.0f m), 높이 %.1f~%.1f m | 경사 평균 %.1f°, 95%% %.1f°, 최대 %.1f° (거리 %.0f~%.0f m) | 15° 초과 %d구간" % (
+            unit_id, len(items), len(ok), spacing,
+            min(float(r["ellipsoidHeightM"]) for r in ok), max(float(r["ellipsoidHeightM"]) for r in ok),
+            sum(degs) / len(degs), percentile(degs, 0.95), worst[0],
+            float(worst[1]["distanceM"]), float(worst[2]["distanceM"]), sum(1 for d in degs if d > 15.0)))
+
+
+def main():
+    parser = argparse.ArgumentParser(description="전차 경로의 OSM 도로 이탈·경사 측정")
+    parser.add_argument("--raw", default=os.path.join(ROOT, "tools", "osm", "roads-raw.json"))
+    parser.add_argument("--routes", default=os.path.join(ROOT, "tools", "osm", "tank-routes.json"))
+    parser.add_argument("--scenario", default=os.path.join(ROOT, "Assets", "Scenarios", "osm-roads-tnk.json"))
+    parser.add_argument("--rate-hz", type=float, default=10.0)
+    parser.add_argument("--laps", type=float, default=2.0)
+    parser.add_argument("--heights", help="RoadProbe가 만든 CSV(Temp/road-probe.csv). 있으면 경사도 계산한다")
+    args = parser.parse_args()
+
+    with open(args.routes, encoding="utf-8") as f:
+        way_id = json.load(f)["wayId"]
+    poly = road_polyline(args.raw, way_id)
+    report_deviation(measure_deviation(args.scenario, poly, args.rate_hz, args.laps), args.rate_hz)
+    if args.heights:
+        report_slope(args.heights)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
