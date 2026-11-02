@@ -2,9 +2,9 @@
 
 드론·전차의 GPS 위치와 작전 상황을 3D 지형 위에서 보여주는 관제 시스템 포트폴리오 프로젝트입니다. Unity로 만들며, 모든 데이터는 가상 값과 공개 지형 데이터입니다. 수신·표시 전용이며 유닛에 명령을 보내는 경로는 없습니다.
 
-![5단계: ArduPilot SITL 드론이 MAVLink로 이동하는 모습과 상단 데이터 소스 표시줄](docs/images/stage5-mavlink-sitl.gif)
+![6단계: 전차 TNK-01이 OpenStreetMap 실제 도로를 따라 달리는 모습과 관제 UI](docs/images/stage6-osm-roads.gif)
 
-*5단계 결과(약 13초). Mission Planner의 ArduPilot SITL 드론을 MAVLink로 받아 지형 위에서 움직입니다. 상단 표시줄이 현재 데이터 소스와 `수신 / 손상 (미지원)` 카운터를 항상 보여 줍니다.*
+*6단계 결과(약 12초). 전차가 OpenStreetMap의 실제 포장도로를 따라 달립니다(도로 중심선에서 평균 0.3–0.6m, 최대 1.5m). ArduPilot SITL 드론을 MAVLink로 받아 움직이는 5단계 연동 장면은 [5단계 GIF](docs/images/stage5-mavlink-sitl.gif)에서 볼 수 있습니다.*
 
 ## 진행 상황
 
