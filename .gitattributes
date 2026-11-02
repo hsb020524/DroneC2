@@ -1,3 +1,7 @@
 # Unity editor layout files are misdetected as Wolfram Language by GitHub Linguist
 *.wlt linguist-detectable=false
 *.wlt linguist-generated=true
+
+# Line endings: Unity writes LF. With core.autocrlf=true (the Windows default) a CRLF checkout makes git
+# report settings files that Unity re-saved (identical content) as modified. Check out LF everywhere.
+* text=auto eol=lf

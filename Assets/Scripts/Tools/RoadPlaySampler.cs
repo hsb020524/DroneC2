@@ -64,6 +64,9 @@ namespace DroneC2.Tools
             if (Time.time < nextSample)
                 return;
             nextSample += interval;
+            // 에디터가 멈췄다 돌아온 뒤 밀린 샘플을 한 프레임에 몰아서 기록하지 않는다(시간 간격이 0에 가까운 샘플 방지).
+            if (nextSample <= Time.time)
+                nextSample = Time.time + interval;
 
             float t = Time.time - startTime;
             foreach (string id in UnitIds)
