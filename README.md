@@ -97,7 +97,15 @@ flowchart LR
 3. Unity Hub의 **Add → Add project from disk**로 클론한 폴더를 추가하고 엽니다. 첫 열기는 패키지 해석과 임포트 때문에 5분 안팎 걸릴 수 있습니다(테스트 PC 기준).
 4. 패키지는 `Packages/manifest.json`의 Cesium 레지스트리와 Git 의존성에서 자동으로 받아옵니다.
 
-> **개발 도구 알림 — MCP for Unity:** 이 프로젝트는 개발 도구로 [MCP for Unity](https://github.com/CoplayDev/unity-mcp) 10.3.0(커밋 `aa5fc63`으로 고정)을 포함합니다. 열면 이 패키지가 에디터에서 자동으로 실행되고, PC에 설치된 AI 클라이언트의 설정 파일을 갱신할 수 있습니다(콘솔의 `refreshed N client config(s)` 로그). 이 프로젝트를 실행하는 데는 필요하지 않습니다. 원치 않으면 열기 전에 `Packages/manifest.json`에서 `com.coplaydev.unity-mcp` 줄을 지우세요.
+> **개발 도구 — MCP for Unity(선택):** 이 저장소는 [MCP for Unity](https://github.com/CoplayDev/unity-mcp)에 의존하지 않으며, 프로젝트 코드도 이 패키지를 쓰지 않습니다. 개발 중 AI 클라이언트로 에디터를 제어하려면 `Packages/manifest.json`의 `dependencies`에 아래 줄을 직접 추가하세요(개발에는 10.3.0, 커밋 `aa5fc63`을 썼습니다).
+>
+> ```json
+> "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#aa5fc638d623f56178d50329d9ad8c541a57fe66",
+> ```
+>
+> 이 패키지는 열면 에디터에서 자동으로 실행되고 PC에 설치된 AI 클라이언트의 설정 파일을 갱신할 수 있습니다(콘솔의 `refreshed N client config(s)` 로그). 또한 MCP 서버를 켜지 않은 채 MCP 창을 열어 두면 Play 중 에디터가 주기적으로 약 0.3초씩 멈출 수 있으니, 서버를 쓰지 않을 때는 창을 닫으세요.
+>
+> **Cesium 경고:** 콘솔에 Cesium for Unity의 `Signature Missing` 경고가 보이면 정상입니다. 동작에는 영향이 없습니다.
 
 ### 2. 1단계 씬 (토큰 불필요)
 
