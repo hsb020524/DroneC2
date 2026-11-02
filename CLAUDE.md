@@ -158,7 +158,7 @@ Play 모드에서 프레임 시간·활성 타일 렌더러 수를 샘플링해 
 - 실제 군사 데이터와 실제 시설 좌표를 사용하지 않는다. 위치·경로·식별자는 가상 값 또는 공개 데이터만 쓴다.
 - 수신·표시 전용이며 유닛에 명령을 보내는 경로를 만들지 않는다.
 - Cesium ion 토큰 등 비밀 값은 채팅에 붙여넣거나 커밋하지 않는다. 연결은 사용자가 Unity에서 직접 한다.
-- 푸시 전에 올라갈 커밋에 토큰 형태 문자열(JWT `eyJ…`)과 `Assets/CesiumSettings` 경로가 없는지 검사한다. 또 `git diff origin/main -- Packages/`에 `com.coplaydev.unity-mcp`가 없는지 확인한다(내장 패키지의 lock 변경이 섞여 올라가는 것 방지). 토큰이 대화나 로그에 노출되면 재발급한다.
+- 푸시 전에 올라갈 커밋에 토큰 형태 문자열(JWT `eyJ…`)과 `Assets/CesiumSettings` 경로가 없는지 검사한다. 또 `git diff origin/main..HEAD -- Packages/ | grep '^+' | grep -c unity-mcp`가 0인지 확인한다(내장 패키지의 lock 변경이 섞여 올라가는 것 방지; 제거된 `-` 줄은 정상이고, `..HEAD` 없이 `origin/main`만 쓰면 커밋 안 한 로컬 lock 변경이 `+`로 섞여 나온다). 토큰이 대화나 로그에 노출되면 재발급한다.
 - 자세한 내용은 `docs/requirements.md` 6절을 따른다.
 
 ## 기타
