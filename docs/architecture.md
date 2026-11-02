@@ -79,6 +79,7 @@ sequenceDiagram
 | 3 (완료) | 다중 유닛 가짜 GPS(드론 3·전차 2, 결함 주입) | 동일 (변환기 하나를 모든 유닛이 공유) | 다중 유닛 + 마커 + 관제 UI(목록·상세) |
 | 4 (완료) | 동일 + 시나리오 JSON 로딩 | 동일 | + 유닛 가상 카메라와 카메라 패널(선택·고정) |
 | 5 (완료) | + MAVLink 시뮬레이터(UDP 수신, sysid별 소스). 시작 시 설정으로 가짜 GPS와 전환 | 동일 (`HomeRelative` 고도 모드만 추가) | 동일 (수신 전 유닛 숨김, 데이터 소스 표시줄 추가) |
+| 6 (완료) | 가짜 GPS가 `PathFollower`(경과 시간 → 경로 위 위치)로 이동, 전차 경로는 OSM 도로 파생 JSON. Play 중 소스 전환 시 초기화 | 동일 | 동일 (전환 시 유닛·표시·경로선·카메라를 비우는 `ResetUnit`/`ResetUnits` 경로 추가) |
 
 ## 5. 계층별 책임
 
@@ -96,7 +97,7 @@ sequenceDiagram
 
 | 계층 | 구성 요소 | 역할 |
 |---|---|---|
-| 데이터 소스 | `TelemetrySample`, `ITelemetrySource`, `FakeGpsSource` | 위경도 기준 샘플 구조체, 소스 인터페이스(이벤트 푸시), 웨이포인트 순환 가짜 GPS |
+| 데이터 소스 | `TelemetrySample`, `ITelemetrySource`, `FakeGpsSource` | 위경도 기준 샘플 구조체, 소스 인터페이스(이벤트 푸시), 웨이포인트 순환 가짜 GPS. 이동은 `PathFollower`가 `속도 × 경과 시간`을 닫힌 경로 위 위치·방위로 바꾼다(코너를 깎지 않음, tools/path_follower.py와 같은 수식) |
 | 좌표 변환 | `ICoordinateConverter`, `LocalTangentPlaneConverter` | 위경도·고도 → 월드 좌표(x=동, y=고도, z=북), 방위각 → 회전 |
 | 표시 | `DroneView`, `PathTrail`, `FollowCamera` | 보간 이동·회전, 경로선, 뒤·위 추적 카메라 (월드 좌표만 사용) |
 | 연결 | `UnitTelemetryBinder` | 소스 → 변환기 → 뷰를 잇는 유일한 지점 |

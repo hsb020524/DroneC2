@@ -15,6 +15,7 @@
 | 3 | 다중 유닛(드론 3·전차 2) + 관제 UI | 완료 |
 | 4 | 카메라 패널(선택·고정 2개), 시나리오 JSON | 완료 |
 | 5 | MAVLink 시뮬레이터 연동(ArduPilot SITL), 데이터 소스 전환 | 완료 |
+| 6 | Play 중 소스 전환 초기화, 전차 경로를 OpenStreetMap 실제 도로로 교체, 경과 시간 기반 이동 | 완료 |
 
 ### 1단계 — 평면 위 가짜 GPS
 
@@ -45,6 +46,14 @@ Cesium World Terrain 위에 위경도 기준으로 드론을 배치하고, 지�
 ArduPilot SITL(Mission Planner)이 보내는 MAVLink v1·v2 텔레메트리를 UDP로 받아 유닛을 움직입니다. 수신 전용이며 요청이나 명령을 보내지 않습니다. 데이터 소스는 설정으로 가상 GPS와 MAVLink 사이를 전환하고(Play 중 전환하면 이전 소스의 유닛을 비웁니다), MAVLink 모드에서는 가짜 GPS로 대체하지 않으며, 수신하지 못한 유닛은 화면에도 나타나지 않습니다. 고도는 홈 기준(`relative_alt`)에 홈 지형 높이를 더해 지형 위에 놓습니다.
 
 ![5단계 결과 스크린샷](docs/images/stage5-mavlink-sitl.png)
+
+### 6단계 — 실제 도로 경로와 소스 전환 초기화
+
+전차 경로를 OpenStreetMap의 실제 도로 선(쿠워히 접근도로)에서 만들었습니다. 변환 스크립트(`tools/osm_to_scenario.py`)가 도로를 구간으로 잘라 단순화·왕복 점열로 만들고, 가짜 GPS와 MAVLink 에미터가 같은 경로 파일을 읽습니다. 이동은 "속도 × 경과 시간"으로 경로 위 위치를 구하는 방식으로 바꿔 코너를 깎지 않고, 같은 시간이면 C#과 파이썬이 같은 위치를 냅니다. Play 중 데이터 소스를 바꾸면 이전 소스의 유닛·표시를 모두 비웁니다. 측정 결과 전차는 도로 중심선에서 평균 0.3–0.6m, 최대 1.5m 이내를 달립니다.
+
+![6단계 결과 GIF: TNK-01이 포장도로를 따라 달리는 약 12초 장면](docs/images/stage6-osm-roads.gif)
+
+![6단계 결과 스크린샷](docs/images/stage6-osm-roads.png)
 
 단계별 구현·검증·겪은 문제는 [docs/devlog.md](docs/devlog.md)에 정리했습니다.
 

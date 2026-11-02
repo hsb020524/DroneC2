@@ -15,7 +15,7 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 
 > 단계가 끝날 때마다 이 섹션을 갱신한다.
 
-- 현재 단계: 5단계(MAVLink) 구현·검증·문서 정리 완료(`stage-5` 태그 푸시 완료). 6단계는 후보 ①(소스 전환 시 초기화)만 구현·검증·커밋했고(푸시 전, 아래 "6단계 ①"), 나머지 6단계 범위는 정의 전(후보는 아래 "6단계 후보")
+- 현재 단계: 6단계(① 소스 전환 시 초기화, ② 전차 경로를 OSM 실제 도로로) 구현·검증·문서 정리 완료. `stage-6` 태그는 로컬에만 있고 푸시 전(푸시는 사용자 확인 후). 나머지 후보(③~⑦)는 정의 전(아래 "6단계 후보")
 - 완료: 1단계 전체(평면 위 가짜 GPS 드론, 경로선, 추적 카메라)와 2단계 구현·검증.
   - 2단계: `Stage2Cesium` 씬(Cesium World Terrain + Bing Maps Aerial)에서 `CesiumGeoreferenceConverter`(`ICoordinateConverter`)로 위경도를 월드 좌표로 변환한다. `ITerrainHeightSampler` + `TerrainHeightGrid`(격자 캐시·쌍선형 보간) + `AltitudeResolver`로 지표 기준 고도(`AltitudeMode`: Absolute/AboveGround/ClampToGround)를 지원한다. 드론은 `AboveGround` 80m로 경로를 이동하며 지표 위 높이가 77~81m로 유지됨을 실측했다.
   - 기준점: 35.563°N, 83.499°W(클링맨스 돔 부근), 지오레퍼런스 높이 2000m(타원체고). 경로는 기준점 주변 약 1.2km 사각형(코너까지 약 850m), 속도 25m/s.
@@ -23,20 +23,24 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
   - EditMode 테스트 35건 통과(좌표 변환 2종 7건씩, 격자 11건, 고도 해석 8건, `DroneView` 2건). Play 모드 확인 완료.
 - 3단계: `Stage3Control` 씬에서 드론 3기(`AboveGround` 60/80/100m)·전차 2기(`ClampToGround`)를 동시에 표시한다. 구조: `UnitKind`/`UnitStatus`는 DataSource 계층, `UnitStateStore`(순수 로직)·`UnitRegistry`(MonoBehaviour)가 수신·두절 판정(2초)·선택을 담고, `UnitMarker`(마커)·`CameraSelectionBinder`(선택→카메라)·UI Toolkit 목록/상세 패널(`UnitListPresenter`, `UnitDetailPresenter`, `UnitFormat`)이 레지스트리만 읽는다. 유닛은 `Assets/Prefabs/Units/Drone.prefab`·`Tank.prefab`이며 변환기·레지스트리는 씬에 하나씩 두고 공유한다.
   - EditMode 테스트 65건 통과. 10기 에디터 평균 643 FPS(빌드 측정 아님). UI는 1920×1080 기준 높이 맞춤 스케일링이다.
-  - 알려진 한계: TNK-01 경로가 도로에서 벗어나는 구간이 있다(야지 주행으로 보고 보정하지 않기로 결정). TNK-02 경로는 짧다(동쪽 연장은 경사 15° 초과). 높이 캐시 상한 없음. 3D 오브젝트 클릭 선택 없음. (Esc 키 해제는 사용자가 직접 Play로 확인함)
+  - 알려진 한계: TNK-01 경로가 도로에서 벗어나는 구간이 있다(야지 주행으로 보고 보정하지 않기로 결정 → 6단계 ②에서 OSM 도로 경로로 교체해 해소). TNK-02 경로는 짧다(동쪽 연장은 경사 15° 초과). 높이 캐시 상한 없음. 3D 오브젝트 클릭 선택 없음. (Esc 키 해제는 사용자가 직접 Play로 확인함)
 - 6단계 ①(소스 전환 시 초기화, 구현·검증·커밋 완료, 푸시 전): 5단계의 한계("소스 전환은 Play 시작 전 설정 기준", 전환하면 이전 유닛이 두절로 남아 가짜·실제가 섞임)를 해소했다. `TelemetrySourceSelector.SetMode`(Play 중 인스펙터 변경도 에디터 전용 `OnValidate`+`delayCall`로 받음, `#if UNITY_EDITOR`)가 전환하면 **이전 소스 구독 해제 → 각 바인더 `ResetUnit()` → `UnitRegistry.ResetUnits()` → 새 소스 켜기** 순서로 진행한다(초기화가 소스 활성화보다 먼저여야 `FakeGpsSource`가 켜질 때 바로 내보내는 첫 샘플이 지워지지 않는다). 초기화 대상: `UnitStateStore.Clear()`(유닛·선택·고정, `Cleared` 이벤트), 레지스트리의 뷰·텍스처 참조, `DroneView.ResetPlacement()`(렌더러 다시 숨김, `PathTrail`이 이벤트로 경로 삭제), 마커 선택, 카메라. `UnitListPresenter`는 `Cleared`로 목록을 다시 그린다. 시작 시 `Apply()`는 초기화하지 않는다. `FakeGpsSource`는 다시 켜질 때마다 시나리오를 처음부터 다시 시작한다(`OnEnable`→`Begin`). 선택기에 `registry` 필드를 씬에서 연결했다(없으면 경고). **카메라 `RenderTexture`는 `UnitCameraRig`가 소유**하므로 레지스트리는 참조만 버리고 `UnitCameraRig.ReleaseTexture()`가 렌더를 끄고 `Release()`만 한다(객체는 `OnDestroy`까지 유지, 다시 렌더하면 자동 재생성). EditMode 테스트 175건 통과.
   - Play 측정(에디터): 5기+선택·고정 상태에서 `SetMode(Mavlink)` → 유닛 0, 선택·고정 null, 배치 0, 활성 렌더러 0, 렌더 중 카메라 0, 목록 0행("유닛 목록 (0)"), 텍스처 5개 모두 해제. 에미터(sysid 1·2)를 보내자 UAV-01·02만 등장(미등록 sysid 0, 가짜 잔상 없음). `SetMode(FakeGps)`로 되돌리면 5기가 즉시 복구되고 수신 소켓이 닫힌다. 전환 12회 반복 후에도 전체 `RenderTexture` 수는 31개로 같았고(유닛 카메라 5개), 해제된 텍스처는 유닛을 선택하면 다시 만들어졌다. 콘솔 error·warning 0건. 씬은 모드를 바꾼 채 저장하지 않았다(기본 FakeGps; 스크린샷·GIF도 모드 값만 바꾸고 씬 저장 없이 Play). 남은 한계는 "한 번도 수신하지 못한 유닛은 목록에 나타나지 않음"(후보 ⑤).
   - 문서(README·requirements·architecture)는 이에 맞춰 수정했고, devlog의 5단계 기록은 당시 사실이라 남기되 6단계 ①에서 해소했다고 덧붙였다. 6단계 devlog 정리는 단계가 끝날 때 한다.
-- 6단계 후보(우선순위 순): ① ~~소스 전환 시 스토어·목록 초기화~~(완료) ② TNK 경로를 OpenStreetMap 도로 데이터로 만들기(ODbL 출처 표기 필요, 변환 스크립트는 `tools/`에) ③ 두절 상태에서 상세 패널의 속도·위치가 마지막 값 그대로(예: 25.0 m/s) 보여 운용자가 현재 값으로 오해할 수 있음 → 두절일 때 흐리게 하거나 "마지막 값"으로 표시 ④ 지상 유닛 높이를 물리 메시 레이캐스트로 정하고 타일이 없으면 샘플러로 대체(콜라이더 비용·LOD 전환 시 높이 튐 평가 필요, 현재 약 ±4m) ⑤ 테이블 기반 유닛 사전 등록(수신 전 두절 표시) ⑥ 전차(Rover) SITL 확인 ⑦ 지표 높이 캐시 상한
-- **재개 지점(2026-10-31 종료 시점, 푸시 전 로컬 커밋은 `origin/main`보다 앞선 상태, push 안 함)**:
+- 6단계 ②(전차 경로를 OSM 실제 도로로, 구현·측정·문서 완료, 푸시 전): 전차 경로를 OpenStreetMap의 `Kuwohi Access Road`(way 19607229)에서 만들었다. `tools/osm/`에 Overpass 질의문(`roads.overpassql`)·응답 원본(`roads-raw.json`, 105KB, 2026-11-02 14:16 UTC)·구간 설정(`tank-routes.json`)·ODbL 안내를 두고, `tools/osm_to_scenario.py`(표준 라이브러리만)가 도로를 구간으로 자르고 직선 단순화(1.5m)·왕복 점열로 만들어 `Assets/Scenarios/osm-roads-tnk.json`을 낸다. TNK-01은 도로 0–1000m(한 바퀴 1999m, 12m/s), TNK-02는 1100–1500m(799m, 8m/s). 드론은 `stage3-demo.json`에 남고 전차 두 기만 새 파일을 읽는다(`Stage3Control`의 TNK 인스턴스 `scenarioJson`을 새 에셋으로 연결). **ODbL:** 경로를 별도 파일로 분리하고 JSON의 `attribution`, `Assets/Scenarios/OSM-ATTRIBUTION.md`, README에 © OpenStreetMap contributors와 openstreetmap.org/copyright 링크를 넣었다.
+  - **이동 방식 변경(사용자 제안):** 도착 반경(5m) 조향을 경로 길이 기반으로 바꿨다. `PathFollower`(`Assets/Scripts/DataSource/PathFollower.cs`)와 `tools/path_follower.py`가 같은 수식(선분 길이=평면 근사·선분 시작 위도의 cos, 선분 안은 위경도 선형 보간, 방위=선분 atan2)으로 `속도 × 경과 시간`을 닫힌 경로 위 위치·방위로 바꾼다. `FakeGpsSource`와 에미터가 이를 쓰고 `arrivalRadiusM`은 코드·프리팹·씬에서 제거했다. 에미터는 `--scenario`를 여러 번 받는다(기본 `stage3-demo.json` + `osm-roads-tnk.json`). 기준값 `tools/testdata/path_follower_golden.json`(`tools/make_path_golden.py`로 재생성)을 C# `PathFollowerTests`와 파이썬 `tools/test_path_follower.py`가 같이 대조한다. 드론과 1·2단계 씬도 이 방식으로 바뀌었다(꼭짓점을 정확히 지남).
+  - **측정:** 도로 이탈(도로 중심선까지 최단 거리, 평균/최대) 오프라인 TNK-01 0.29/1.28m, TNK-02 0.61/1.49m; Play 실제 파이프라인(180초, 유닛 뷰 위치를 지오레퍼런스로 위경도 환산) 가짜 GPS 0.31/1.28m·0.60/1.49m, MAVLink(에미터 5기, 데이터그램 10,542·손상 0) 0.32/1.28m·0.58/1.48m. 지형 경사(Cesium 10m 간격, 140점 성공) 최대 4.4°(15° 초과 0). 1단계 씬 속도 평균 25.0m/s·꼭짓점 1.0–1.45m, 2단계 씬 지표 위 높이 79.5–80.4m(샘플러 기준). EditMode 184건·파이썬 8건 통과. 측정 도구와 사용법은 아래 "도로 이탈·경사·씬 측정". 샘플러는 에디터가 멈췄다 돌아온 뒤 밀린 샘플을 건너뛴다(처음에 1단계 최대 71.7m/s가 나온 측정 오류를 고침).
+  - **설정 파일 재기록(클론 점검에서 발견):** 새 클론을 Unity로 열면 설정 파일 7개가 수정으로 표시되었다. 임시 클론을 batchmode로 열어 4개를 재현했고 내용은 원본·커밋과 바이트 단위로 같은 가짜 변경이었다(`git diff` 비어 있음). 원인은 `core.autocrlf=true`(Windows 기본)가 CRLF로 체크아웃하는데 Unity는 LF로 다시 쓰는 것으로 보이나 git 내부 메커니즘은 확인하지 못했다. `.gitattributes`에 `* text=auto eol=lf`를 추가했고, 이 규칙이 든 저장소를 새로 클론해 Unity로 열자 `git status`가 비어 있었다. 기존 기록은 모두 LF라 재정규화해도 바뀌는 파일이 없다.
+- 6단계 후보(우선순위 순): ① ~~소스 전환 시 스토어·목록 초기화~~(완료) ② ~~TNK 경로를 OpenStreetMap 도로 데이터로 만들기~~(완료) ③ 두절 상태에서 상세 패널의 속도·위치가 마지막 값 그대로(예: 25.0 m/s) 보여 운용자가 현재 값으로 오해할 수 있음 → 두절일 때 흐리게 하거나 "마지막 값"으로 표시 ④ 지상 유닛 높이를 물리 메시 레이캐스트로 정하고 타일이 없으면 샘플러로 대체(콜라이더 비용·LOD 전환 시 높이 튐 평가 필요, 현재 약 ±4m) ⑤ 테이블 기반 유닛 사전 등록(수신 전 두절 표시) ⑥ 전차(Rover) SITL 확인 ⑦ 지표 높이 캐시 상한
+- **재개 지점(2026-11-03 갱신, 푸시 전 로컬 커밋은 `origin/main`보다 앞선 상태, push 안 함)**:
   - 끝난 것: 콘솔 경고 4건은 `LogAssert.Expect`가 이미 걸린 테스트의 의도된 로그라 코드 수정 불필요(Expect는 실패만 막고 콘솔 출력은 남김). devlog에 cp949 사례와 MCP 끊김 메모를 넣었다(5단계 "남은 과제" 뒤 "메모: 새 환경 점검에서 발견한 문제"). 클론 재확인에서 pull·Safe Mode 없음·MCP 10.3.0 고정 해석은 확인됨.
   - **MCP for Unity 끊김(실측 확정):** 서버가 꺼져 있고 MCP 창이 열려 있으면 Play 중 EditorLoop가 약 276ms 멈춘다(창을 닫으면 사라짐). 원인은 창의 2초 주기 `IsLocalHttpServerReachable()`이 메인 스레드에서 `ConnectAsync().Wait(250ms)`를 하는 것. 창이 처음에 열려 있게 된 경로는 미확정(패키지에 메인 창 자동 열기 코드 없음, PC 전역 레이아웃 상속 가설은 미검증). **결정: C안.** `Packages/manifest.json`과 `packages-lock.json`에서 `com.coplaydev.unity-mcp`를 제외하고, README의 MCP 알림 문단을 "개발 도구로 쓰려면 이 줄을 추가"로 바꾼다(프로젝트 코드는 패키지에 의존하지 않음). 내 개발 PC는 **내장 패키지**로 유지한다: `Packages/com.coplaydev.unity-mcp/`에 aa5fc63(v10.3.0)을 sparse checkout으로 받아 넣고(`TestProjects`의 긴 경로 때문에 전체 클론은 Windows에서 체크아웃 실패) `.gitignore`로 제외했다. manifest 줄은 필요 없지만 Unity가 `packages-lock.json`에 `"source": "embedded"` 항목과 `newtonsoft-json`을 다시 넣으므로 lock이 항상 수정 상태로 보인다(실측). **그 lock은 커밋하지 않는다.** 로컬 `.git/hooks/pre-commit`(버전 관리 안 됨)이 스테이징된 lock·manifest에 `com.coplaydev.unity-mcp`가 있으면 커밋을 거부한다(`commit -a`도 막음, 시험함). 커밋 전 `git restore --staged Packages/`, pull 전 `git restore Packages/packages-lock.json`. 개발 도구로 쓸 때 서버를 안 켜면 창을 닫으라는 한 줄도 README에 넣는다.
   1. ~~C안 적용~~ 완료(2026-11-02): manifest·lock에서 MCP 제외·README 수정·내장 패키지 전환, 컴파일 오류 0건·EditMode 175건 통과.
   2. ~~이슈 초안 이동~~ 완료: `C:\UnityProjects\DroneC2-tools\notes\unity-mcp-issue-draft.md`. 제출 여부는 사용자가 결정한다.
   3. ~~README에 "Signature Missing" 안내~~ 완료.
   4. ~~클론 폴더 재확인~~ 완료(2026-11-02, 사용자 수행): `C:\UnityProjects\DroneC2-clonetest`(안의 `Assets/CesiumSettings`에 토큰이 있으니 건드리지 않는다)에서 pull(6개 파일, MCP 줄 삭제) 후 열었더니 MCP 탭과 `refreshed client config` 로그가 없고 Stage3Control Play 중 끊김도 없었다. 새로 발견: 클론에서 설정 파일 7개가 수정됨(아래 "설정 파일 재기록" 참고).
-  5. push: 위 확인 후 푸시 전 검사(JWT `eyJ…`, `Assets/CesiumSettings` 경로 0건) → 사용자 확인 → push.
-  6. 이후 6단계 범위는 정해지지 않았다. 시작 전에 사용자와 범위를 정한다(후보 ②③ 포함 위 목록).
+  5. push: 푸시 전 검사(JWT `eyJ…`, `Assets/CesiumSettings` 경로, **커밋별 패치의 계정 경로**, Packages `+unity-mcp` 0건) → 사용자 확인 → push(`main`과 `stage-6` 태그). 푸시하지 않은 로컬 백업 브랜치 `backup/before-path-scrub-2026-11-02`는 확인 후 삭제한다.
+  6. 6단계는 ①②로 마무리했다. 이후 범위(후보 ③~⑦)는 정해지지 않았다. 시작 전에 사용자와 범위를 정한다.
   - 시연 지역: 그레이트 스모키 산맥 국립공원(미국). 보안상 국내 지역(특히 접경 지역)은 의도적으로 제외했고, 한국 산악 지형과 고도(최고 약 2,000m)·숲 능선이 유사해 대체 지역으로 선정했다.
   - Cesium ion 토큰: DroneC2 전용 토큰, 권한 `assets:read`만, 접근 대상은 필요한 지형·이미지 에셋으로 제한. `Assets/CesiumSettings/`는 통째로 `.gitignore` 처리(커밋 금지, `ion.cesium.com.asset`·`CesiumRuntimeSettings.asset`에 토큰 필드가 있음). 토큰은 채팅에 붙여넣지 않고 사용자가 Unity Cesium 패널에서 직접 연결한다. README에는 본인 토큰을 넣어 실행하라는 안내를 쓴다.
   - 씬이 참조하는 `ionServer` GUID는 무시된 `.asset`에 묶여 있어 다른 환경에서는 참조가 비어 있을 수 있다. 새 환경에서는 Cesium 패널에서 토큰을 연결한 뒤 씬을 열어 확인한다.
@@ -70,6 +74,7 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 - [x] `stage-4` 태그와 4-C 이후 커밋의 푸시(푸시 전 토큰·`Assets/CesiumSettings` 검사)
 - [x] `stage-5` 태그와 5단계 커밋의 푸시(푸시 전 토큰·`Assets/CesiumSettings` 검사 0건, 사용자가 GitHub 렌더링 확인 후 태그 푸시)
 - [x] 6단계 ①(소스 전환 시 초기화) 구현·검증·문서 정리(커밋 완료, 푸시 전)
+- [x] 6단계 ②(전차 경로 OSM 도로, 경로 길이 기반 이동, 측정, `.gitattributes`) 구현·측정·문서 정리·`stage-6` 로컬 태그(푸시 전)
 - [x] 저장소 공개 전 **git 전체 기록 검사**(2026-10-26, 읽기 전용): 84개 커밋(모든 refs·태그 객체)의 텍스트 diff(삭제된 줄 포함)와 전체 객체 482 blob의 원본 바이트에서 검사했다. JWT `eyJ…` 0건, `Assets/CesiumSettings` 경로가 추적된 적 없음, `_ionAccessToken:` 필드는 값이 모두 비어 있음, API 키·GitHub 토큰·개인키·`access_token=` 패턴 0건, 의심 파일명 없음, 로컬 Windows 계정명·`C:\Users\<이름>` 경로·이메일·사설 IP 0건, 작성자·커미터 84건 모두 GitHub noreply. 원격 refs는 `main`과 `stage-1~5` 태그뿐. 남은 항목: ① `ProjectSettings.asset`의 `organizationId: hsb020524`(GitHub 사용자명과 같은 공개 식별자, 그대로 둠) ② Unity 템플릿 `Layout.wlt`의 제3자 로컬 경로는 기록 재작성 없이 현재 버전에서 템플릿 파일(`Assets/TutorialInfo`, `Assets/Readme.asset`)을 삭제해 처리했다(과거 커밋에는 남음, 참조 없음 확인, 컴파일 오류 0건·테스트 175건 통과) ③ devlog의 토큰 재발급 기록은 보안 사고 대응 사례로 남기기로 결정. `.gitattributes`의 `*.wlt` 규칙은 삭제하지 않는다.
 - [x] 저장소 공개 전 **docs 이미지 전수 검사**(2026-10-26, 읽기 전용): `docs/images`의 PNG 5개·GIF 5개를 검사했고 문제가 없었다. 메타데이터: PNG는 IHDR·IDAT·IEND 청크뿐(텍스트·EXIF·ICC 없음), GIF는 Pillow로 파싱해 코멘트 없음. 원본 바이트에서 `hsb02`·`C:\Users`·`/Users/`·JWT `eyJ…`·이메일·`access_token`·`Bearer` 0건. 육안: PNG 5장 전체와 GIF 5개의 표본 프레임(stage1·2는 6장, stage3·4·5는 12장씩)에서 Game 뷰 화면만 보이고 에디터 창·콘솔·Inspector·Cesium 패널·계정명·토큰은 없었다(화면의 Cesium 로고·데이터 출처 문구는 정상적인 출처 표시, 좌표는 가상 시연 지역 값). 기록에는 이미지마다 blob이 하나뿐이라 이전 버전이 남아 있지 않고, 작업 폴더 파일은 커밋된 blob과 같다. docs 밖 이미지(`GroundGrid.png`, 삭제한 템플릿의 `URP.png`)도 개인정보 없음. 한계: GIF는 전체 프레임이 아니라 표본이며(녹화 도구가 Game 뷰 프레임만 저장하므로 바탕화면·다른 창이 찍힐 경로는 구조상 없음) 화면 글자는 육안으로만 읽었다(OCR 없음). 검사용 Pillow는 저장소 밖 임시 폴더에만 설치했고 PC 전역·사용자·프로젝트 venv에는 설치되지 않았음을 확인했다. 이미지를 새로 추가·교체하면 다시 검사한다.
 - [x] 저장소 공개 전: 새 폴더에 클론해서(사용자가 README만 보고 직접 수행, 원본 Unity는 닫고 진행, Claude는 막힌 곳 기록·README 수정안 정리) README 실행 방법대로 동작하는지 확인 (Cesium ion 토큰 연결 후 씬 열기, `ionServer` 참조가 비어 있지 않은지 포함)
@@ -109,7 +114,7 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 - 스크립트는 `Assets/Scripts/<역할>/` 아래에 역할별 폴더로 둔다. (예: `DataSource`, `Coordinate`, `View`, `UI`)
 - 환경: Unity `6000.6.5f1`, URP 17.6.0, Input System 1.20.0, Test Framework 1.8.0.
 - `*.csproj`, `*.slnx`와 `Library/`, `Temp/`, `Logs/`, `UserSettings/`는 Unity가 생성하므로 수정하지 않는다.
-- 빌드 스크립트는 없다. EditMode 테스트(`Assets/Tests/EditMode`, 175건)는 UnityMCP `run_tests` 또는 Unity batchmode로 실행한다.
+- 빌드 스크립트는 없다. EditMode 테스트(`Assets/Tests/EditMode`, 184건)는 UnityMCP `run_tests` 또는 Unity batchmode로 실행한다.
 - Player Settings의 Run In Background를 켜 두었다. 에디터가 비포커스여도 Play 모드가 진행된다.
 
 ```powershell
@@ -145,6 +150,17 @@ Play 모드의 Game 화면을 PNG 프레임으로 저장하고 GIF로 조립한�
 
 UI가 들어가는 장면은 Game 뷰 해상도를 1920×1080으로 맞춘 뒤 녹화한다(작은 뷰에서는 UI 글자가 GIF에서 읽히지 않는다). 에디터 포커스가 없으면 Input System 입력이 Game 뷰에 전달되지 않으므로, 자동 검증은 UI 요소에 이벤트를 직접 보내는 방식으로 한다.
 
+### 도로 이탈·경사·씬 측정 (`RoadProbe`, `ScenePlaySampler`)
+
+전차 경로의 도로 위 정렬과 지형 경사를 재고, Play 중 실제 파이프라인(소스 → 바인더 → 변환기 → 뷰)의 위치를 기록한다. 파일 전체가 `UNITY_EDITOR` 전용이다(`Assets/Scripts/Tools/`).
+
+- 지형 높이(화면 없이, 에디터를 닫고): `Unity.exe -batchmode -nographics -projectPath . -executeMethod DroneC2.Tools.RoadProbe.RunFromCommandLine` → `Temp/road-probe.csv`·`road-probe.txt`. 환경 변수 `ROAD_PROBE_STEP`(m, 기본 10)이 조회 간격이다.
+- Play 중 전차 뷰 위치: `execute_code`로 `DroneC2.Tools.RoadProbe.StartPlayMeasurement("라벨", 초);` → `Temp/road-play-라벨.csv`(끝나면 `.done`).
+- Play 중 씬의 모든 `FakeGpsSource` 유닛(1·2단계 씬 포함): `DroneC2.Tools.ScenePlaySampler.Start("라벨", 초);` → `Temp/scene-play-라벨.csv`.
+- 분석: `python tools/measure_road_deviation.py [--heights Temp/road-probe.csv] [--positions Temp/road-play-라벨.csv]`(`--positions`는 여러 번 가능, 인자 없이 실행하면 오프라인 재생).
+- 샘플러는 밀린 샘플을 건너뛰므로 시간 간격이 0에 가까운 값이 생기지 않는다. Play 중 소스 전환(`SetMode`)은 `execute_code`로 하고, 측정 뒤 FakeGps로 되돌리며 씬은 저장하지 않는다.
+- `execute_code`의 안전 검사가 `Directory.Delete` 같은 구문을 막는다. 임시 폴더 정리는 셸에서 한다.
+
 ### 성능 측정 (`PerfProbe`)
 
 Play 모드에서 프레임 시간·활성 타일 렌더러 수를 샘플링해 `Temp/perf.txt`에 한 줄씩 덧붙인다. 파일 전체가 `UNITY_EDITOR` 전용이다.
@@ -158,7 +174,7 @@ Play 모드에서 프레임 시간·활성 타일 렌더러 수를 샘플링해 
 - 실제 군사 데이터와 실제 시설 좌표를 사용하지 않는다. 위치·경로·식별자는 가상 값 또는 공개 데이터만 쓴다.
 - 수신·표시 전용이며 유닛에 명령을 보내는 경로를 만들지 않는다.
 - Cesium ion 토큰 등 비밀 값은 채팅에 붙여넣거나 커밋하지 않는다. 연결은 사용자가 Unity에서 직접 한다.
-- 푸시 전에 올라갈 커밋에 토큰 형태 문자열(JWT `eyJ…`)과 `Assets/CesiumSettings` 경로가 없는지 검사한다. 또 `git diff origin/main..HEAD -- Packages/ | grep '^+' | grep -c unity-mcp`가 0인지 확인한다(내장 패키지의 lock 변경이 섞여 올라가는 것 방지; 제거된 `-` 줄은 정상이고, `..HEAD` 없이 `origin/main`만 쓰면 커밋 안 한 로컬 lock 변경이 `+`로 섞여 나온다). 토큰이 대화나 로그에 노출되면 재발급한다.
+- 푸시 전에 올라갈 커밋에 토큰 형태 문자열(JWT `eyJ…`)과 `Assets/CesiumSettings` 경로가 없는지 검사한다. 최종 diff만 보지 말고 **커밋별 패치**(`git log -p origin/main..HEAD`의 추가 줄)에서 로컬 계정명·`C:\Users` 경로·`AppData`도 검사한다(중간 커밋에 들어갔다 지운 값도 기록에 남아 공개된다. 6단계에서 실제로 한 번 발견해 백업 브랜치를 만든 뒤 푸시 전 커밋만 고쳐 썼다). 또 `git diff origin/main..HEAD -- Packages/ | grep '^+' | grep -c unity-mcp`가 0인지 확인한다(내장 패키지의 lock 변경이 섞여 올라가는 것 방지; 제거된 `-` 줄은 정상이고, `..HEAD` 없이 `origin/main`만 쓰면 커밋 안 한 로컬 lock 변경이 `+`로 섞여 나온다). 토큰이 대화나 로그에 노출되면 재발급한다.
 - 자세한 내용은 `docs/requirements.md` 6절을 따른다.
 
 ## 기타
