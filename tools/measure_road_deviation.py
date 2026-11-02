@@ -8,6 +8,7 @@
 사용 예 (저장소 루트에서):
   python tools/measure_road_deviation.py
   python tools/measure_road_deviation.py --heights Temp/road-probe.csv
+  python tools/measure_road_deviation.py --positions Temp/road-play-fakegps.csv   # Play 중 실제 파이프라인 위치
 """
 
 import argparse
@@ -81,6 +82,28 @@ def report_deviation(results, rate_hz):
             sum(1 for d in dev if d > 1.0), sum(1 for d in dev if d > 3.0)))
 
 
+def report_positions(positions_path, poly, tank_ids=("TNK-01", "TNK-02")):
+    """RoadProbe.StartPlayMeasurement가 기록한 실제 파이프라인 위치(CSV)의 도로 이탈 거리."""
+    rows = {}
+    with open(positions_path, encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            rows.setdefault(r["unit"], []).append(r)
+    print("== Play 중 실제 파이프라인 위치의 도로 이탈 거리 (%s) ==" % os.path.basename(positions_path))
+    for unit_id in tank_ids:
+        items = rows.get(unit_id, [])
+        if not items:
+            print("%s: 기록 없음" % unit_id)
+            continue
+        dev = [distance_to_polyline_m(float(r["latitude"]), float(r["longitude"]), poly) for r in items]
+        span = float(items[-1]["timeSec"]) - float(items[0]["timeSec"])
+        print("%s: 샘플 %d개(%.0f초) | 평균 %.2f m, 95%% %.2f m, 최대 %.2f m | 1m 초과 %d개, 3m 초과 %d개, 5m 초과 %d개" % (
+            unit_id, len(dev), span, sum(dev) / len(dev), percentile(dev, 0.95), max(dev),
+            sum(1 for d in dev if d > 1.0), sum(1 for d in dev if d > 3.0), sum(1 for d in dev if d > 5.0)))
+    others = sorted(set(rows) - set(tank_ids))
+    if others:
+        print("그 밖에 기록된 유닛(도로 비교 대상 아님): " + ", ".join("%s %d개" % (u, len(rows[u])) for u in others))
+
+
 def report_slope(heights_path):
     rows = {}
     with open(heights_path, encoding="utf-8") as f:
@@ -114,11 +137,18 @@ def main():
     parser.add_argument("--rate-hz", type=float, default=10.0)
     parser.add_argument("--laps", type=float, default=2.0)
     parser.add_argument("--heights", help="RoadProbe가 만든 CSV(Temp/road-probe.csv). 있으면 경사도 계산한다")
+    parser.add_argument("--positions", action="append",
+                        help="RoadProbe.StartPlayMeasurement가 만든 CSV(Temp/road-play-*.csv). 여러 번 줄 수 있다. "
+                             "주면 시나리오 재생 대신 이 위치들의 이탈 거리만 계산한다")
     args = parser.parse_args()
 
     with open(args.routes, encoding="utf-8") as f:
         way_id = json.load(f)["wayId"]
     poly = road_polyline(args.raw, way_id)
+    if args.positions:
+        for path in args.positions:
+            report_positions(path, poly)
+        return 0
     report_deviation(measure_deviation(args.scenario, poly, args.rate_hz, args.laps), args.rate_hz)
     if args.heights:
         report_slope(args.heights)

@@ -30,6 +30,22 @@ namespace DroneC2.Tools
         static string TempPath(string file) =>
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Temp", file));
 
+        /// <summary>
+        /// Play 중 실제 파이프라인을 거친 유닛 뷰 위치를 기록한다(결과: Temp/road-play-라벨.csv, 끝나면 .done 생성).
+        /// 사용 예: DroneC2.Tools.RoadProbe.StartPlayMeasurement("fakegps", 120f);
+        /// </summary>
+        public static void StartPlayMeasurement(string label, float durationSec, float intervalSec = 0.1f)
+        {
+            if (!Application.isPlaying)
+            {
+                Debug.LogError("RoadProbe: Play 모드에서만 측정할 수 있습니다.");
+                return;
+            }
+
+            var go = new GameObject("RoadPlaySampler (temp)") { hideFlags = HideFlags.HideAndDontSave };
+            go.AddComponent<RoadPlaySampler>().Begin(label, durationSec, intervalSec);
+        }
+
         public static void RunFromCommandLine()
         {
             try
