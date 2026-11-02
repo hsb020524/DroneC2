@@ -30,10 +30,10 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 - 6단계 후보(우선순위 순): ① ~~소스 전환 시 스토어·목록 초기화~~(완료) ② TNK 경로를 OpenStreetMap 도로 데이터로 만들기(ODbL 출처 표기 필요, 변환 스크립트는 `tools/`에) ③ 두절 상태에서 상세 패널의 속도·위치가 마지막 값 그대로(예: 25.0 m/s) 보여 운용자가 현재 값으로 오해할 수 있음 → 두절일 때 흐리게 하거나 "마지막 값"으로 표시 ④ 지상 유닛 높이를 물리 메시 레이캐스트로 정하고 타일이 없으면 샘플러로 대체(콜라이더 비용·LOD 전환 시 높이 튐 평가 필요, 현재 약 ±4m) ⑤ 테이블 기반 유닛 사전 등록(수신 전 두절 표시) ⑥ 전차(Rover) SITL 확인 ⑦ 지표 높이 캐시 상한
 - **재개 지점(2026-10-31 종료 시점, 푸시 전 로컬 커밋은 `origin/main`보다 앞선 상태, push 안 함)**:
   - 끝난 것: 콘솔 경고 4건은 `LogAssert.Expect`가 이미 걸린 테스트의 의도된 로그라 코드 수정 불필요(Expect는 실패만 막고 콘솔 출력은 남김). devlog에 cp949 사례와 MCP 끊김 메모를 넣었다(5단계 "남은 과제" 뒤 "메모: 새 환경 점검에서 발견한 문제"). 클론 재확인에서 pull·Safe Mode 없음·MCP 10.3.0 고정 해석은 확인됨.
-  - **MCP for Unity 끊김(실측 확정):** 서버가 꺼져 있고 MCP 창이 열려 있으면 Play 중 EditorLoop가 약 276ms 멈춘다(창을 닫으면 사라짐). 원인은 창의 2초 주기 `IsLocalHttpServerReachable()`이 메인 스레드에서 `ConnectAsync().Wait(250ms)`를 하는 것. 창이 처음에 열려 있게 된 경로는 미확정(패키지에 메인 창 자동 열기 코드 없음, PC 전역 레이아웃 상속 가설은 미검증). **결정: C안.** `Packages/manifest.json`과 `packages-lock.json`에서 `com.coplaydev.unity-mcp`를 제외하고, README의 MCP 알림 문단을 "개발 도구로 쓰려면 이 줄을 추가"로 바꾼다(프로젝트 코드는 패키지에 의존하지 않음). 내 개발 PC는 로컬에서만 패키지를 유지한다(`git update-index --skip-worktree`, pull 충돌 주의). 개발 도구로 쓸 때 서버를 안 켜면 창을 닫으라는 한 줄도 README에 넣는다.
-  1. C안 적용: manifest·lock 수정, README 수정, 컴파일 오류 0건·EditMode 175건 확인.
-  2. 상위 저장소 이슈 초안을 임시 폴더에서 `C:\UnityProjects\DroneC2-tools\notes`로 옮긴다. 원본: `<임시 폴더>\unity-mcp-issue-draft.md`(임시 폴더라 사라질 수 있으니 먼저 옮긴다). 제출 여부는 사용자가 결정한다.
-  3. README에 Cesium for Unity "Signature Missing" 경고가 정상이라는 한 줄을 추가한다.
+  - **MCP for Unity 끊김(실측 확정):** 서버가 꺼져 있고 MCP 창이 열려 있으면 Play 중 EditorLoop가 약 276ms 멈춘다(창을 닫으면 사라짐). 원인은 창의 2초 주기 `IsLocalHttpServerReachable()`이 메인 스레드에서 `ConnectAsync().Wait(250ms)`를 하는 것. 창이 처음에 열려 있게 된 경로는 미확정(패키지에 메인 창 자동 열기 코드 없음, PC 전역 레이아웃 상속 가설은 미검증). **결정: C안.** `Packages/manifest.json`과 `packages-lock.json`에서 `com.coplaydev.unity-mcp`를 제외하고, README의 MCP 알림 문단을 "개발 도구로 쓰려면 이 줄을 추가"로 바꾼다(프로젝트 코드는 패키지에 의존하지 않음). 내 개발 PC는 **내장 패키지**로 유지한다: `Packages/com.coplaydev.unity-mcp/`에 aa5fc63(v10.3.0)을 sparse checkout으로 받아 넣고(`TestProjects`의 긴 경로 때문에 전체 클론은 Windows에서 체크아웃 실패) `.gitignore`로 제외했다. manifest 줄은 필요 없지만 Unity가 `packages-lock.json`에 `"source": "embedded"` 항목과 `newtonsoft-json`을 다시 넣으므로 lock이 항상 수정 상태로 보인다(실측). **그 lock은 커밋하지 않는다.** 로컬 `.git/hooks/pre-commit`(버전 관리 안 됨)이 스테이징된 lock·manifest에 `com.coplaydev.unity-mcp`가 있으면 커밋을 거부한다(`commit -a`도 막음, 시험함). 커밋 전 `git restore --staged Packages/`, pull 전 `git restore Packages/packages-lock.json`. 개발 도구로 쓸 때 서버를 안 켜면 창을 닫으라는 한 줄도 README에 넣는다.
+  1. ~~C안 적용~~ 완료(2026-11-02): manifest·lock에서 MCP 제외·README 수정·내장 패키지 전환, 컴파일 오류 0건·EditMode 175건 통과.
+  2. ~~이슈 초안 이동~~ 완료: `C:\UnityProjects\DroneC2-tools\notes\unity-mcp-issue-draft.md`. 제출 여부는 사용자가 결정한다.
+  3. ~~README에 "Signature Missing" 안내~~ 완료.
   4. 클론 폴더 재확인 마무리: `C:\UnityProjects\DroneC2-clonetest`(안의 `Assets/CesiumSettings`에 토큰이 있으니 건드리지 않는다)에서 C안 반영본을 pull해 MCP 없이 열어 Play해도 끊기지 않는지, README 안내가 맞는지 확인한다. 끝나면 위 "클론해서 확인" 체크박스를 닫는다.
   5. push: 위 확인 후 푸시 전 검사(JWT `eyJ…`, `Assets/CesiumSettings` 경로 0건) → 사용자 확인 → push.
   6. 이후 6단계 범위는 정해지지 않았다. 시작 전에 사용자와 범위를 정한다(후보 ②③ 포함 위 목록).
@@ -158,7 +158,7 @@ Play 모드에서 프레임 시간·활성 타일 렌더러 수를 샘플링해 
 - 실제 군사 데이터와 실제 시설 좌표를 사용하지 않는다. 위치·경로·식별자는 가상 값 또는 공개 데이터만 쓴다.
 - 수신·표시 전용이며 유닛에 명령을 보내는 경로를 만들지 않는다.
 - Cesium ion 토큰 등 비밀 값은 채팅에 붙여넣거나 커밋하지 않는다. 연결은 사용자가 Unity에서 직접 한다.
-- 푸시 전에 올라갈 커밋에 토큰 형태 문자열(JWT `eyJ…`)과 `Assets/CesiumSettings` 경로가 없는지 검사한다. 토큰이 대화나 로그에 노출되면 재발급한다.
+- 푸시 전에 올라갈 커밋에 토큰 형태 문자열(JWT `eyJ…`)과 `Assets/CesiumSettings` 경로가 없는지 검사한다. 또 `git diff origin/main -- Packages/`에 `com.coplaydev.unity-mcp`가 없는지 확인한다(내장 패키지의 lock 변경이 섞여 올라가는 것 방지). 토큰이 대화나 로그에 노출되면 재발급한다.
 - 자세한 내용은 `docs/requirements.md` 6절을 따른다.
 
 ## 기타
