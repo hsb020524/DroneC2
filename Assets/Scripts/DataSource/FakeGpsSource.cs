@@ -6,13 +6,10 @@ namespace DroneC2.DataSource
 {
     /// <summary>
     /// 웨이포인트를 일정 속도로 순환하는 가짜 GPS 데이터 소스. 위경도 기준으로만 샘플을 만든다.
+    /// 위치는 경과 시간으로 정한다: 이동 거리 = 속도 × 경과 시간을 <see cref="PathFollower"/>가 경로 위 위치로 바꾼다.
     /// </summary>
     public class FakeGpsSource : MonoBehaviour, ITelemetrySource
     {
-        const double EarthRadiusM = 6378137.0;
-        const double DegToRad = Math.PI / 180.0;
-        const double RadToDeg = 180.0 / Math.PI;
-
         [Serializable]
         public struct GeoPoint
         {
@@ -24,7 +21,6 @@ namespace DroneC2.DataSource
         [SerializeField] double altitudeM = 50.0;
         [SerializeField, Min(0.1f)] float speedMps = 25f;
         [SerializeField, Min(1f)] float sampleRateHz = 10f;
-        [SerializeField, Min(0.1f)] float arrivalRadiusM = 5f;
         [SerializeField] UnitKind unitKind = UnitKind.Drone;
 
         [Tooltip("altitudeM의 기준. 샘플에 실려 가며 바인더가 이 기준대로 해석한다. 시나리오를 쓰면 시나리오 값이 덮어쓴다.")]
@@ -51,10 +47,7 @@ namespace DroneC2.DataSource
 
         public event Action<TelemetrySample> SampleReceived;
 
-        double latitude;
-        double longitude;
-        double headingDeg;
-        int targetIndex;
+        PathFollower follower;
         double sampleInterval;
         double sinceLastSample;
         double startTime;
@@ -90,10 +83,20 @@ namespace DroneC2.DataSource
                 return false;
             }
 
-            latitude = waypoints[0].latitude;
-            longitude = waypoints[0].longitude;
-            targetIndex = 1;
-            headingDeg = BearingTo(waypoints[targetIndex]);
+            var points = new List<(double latitude, double longitude)>(waypoints.Count);
+            foreach (GeoPoint point in waypoints)
+                points.Add((point.latitude, point.longitude));
+
+            try
+            {
+                follower = new PathFollower(points);
+            }
+            catch (ArgumentException e)
+            {
+                Debug.LogError($"FakeGpsSource: {unitId}: {e.Message}", this);
+                return false;
+            }
+
             sampleInterval = 1.0 / sampleRateHz;
             sinceLastSample = 0.0;
             startTime = Time.timeAsDouble;
@@ -132,55 +135,12 @@ namespace DroneC2.DataSource
 
         void Update()
         {
-            Advance(Time.deltaTime);
-
             sinceLastSample += Time.deltaTime;
             if (sinceLastSample >= sampleInterval)
             {
                 sinceLastSample = 0.0;
                 Emit();
             }
-        }
-
-        void Advance(double dt)
-        {
-            double remaining = speedMps * dt;
-            // 한 프레임에 웨이포인트를 지나칠 수 있어 이동 거리가 소진될 때까지 반복한다.
-            // 반복 횟수는 웨이포인트 수로 제한해 도착 반경이 겹칠 때의 무한 루프를 막는다.
-            int guard = waypoints.Count;
-            while (remaining > 0.0 && guard-- > 0)
-            {
-                ToLocalMeters(waypoints[targetIndex], out double east, out double north);
-                double distance = Math.Sqrt(east * east + north * north);
-
-                if (distance <= arrivalRadiusM)
-                {
-                    targetIndex = (targetIndex + 1) % waypoints.Count;
-                    headingDeg = BearingTo(waypoints[targetIndex]);
-                    continue;
-                }
-
-                headingDeg = Math.Atan2(east, north) * RadToDeg;
-                double step = Math.Min(remaining, distance);
-                double cosLat = Math.Cos(latitude * DegToRad);
-                latitude += step * (north / distance) / (EarthRadiusM * DegToRad);
-                longitude += step * (east / distance) / (EarthRadiusM * DegToRad * cosLat);
-                remaining -= step;
-            }
-        }
-
-        void ToLocalMeters(GeoPoint target, out double east, out double north)
-        {
-            double cosLat = Math.Cos(latitude * DegToRad);
-            east = (target.longitude - longitude) * DegToRad * EarthRadiusM * cosLat;
-            north = (target.latitude - latitude) * DegToRad * EarthRadiusM;
-        }
-
-        double BearingTo(GeoPoint target)
-        {
-            ToLocalMeters(target, out double east, out double north);
-            double bearing = Math.Atan2(east, north) * RadToDeg;
-            return (bearing + 360.0) % 360.0;
         }
 
         void Emit()
@@ -195,7 +155,7 @@ namespace DroneC2.DataSource
                 ? ReportedStatus.Warning
                 : ReportedStatus.Normal;
 
-            double heading = (headingDeg + 360.0) % 360.0;
+            follower.Evaluate(speedMps * elapsed, out double latitude, out double longitude, out double heading);
             SampleReceived?.Invoke(new TelemetrySample(
                 unitId, latitude, longitude, altitudeM, altitudeReference, heading, speedMps,
                 Time.timeAsDouble, unitKind, status));

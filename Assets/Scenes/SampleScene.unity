@@ -452,7 +452,6 @@ MonoBehaviour:
   altitudeM: 50
   speedMps: 25
   sampleRateHz: 10
-  arrivalRadiusM: 5
   waypoints:
   - latitude: 30.003
     longitude: -40.003

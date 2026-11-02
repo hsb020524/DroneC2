@@ -382,7 +382,6 @@ MonoBehaviour:
   altitudeM: 0
   speedMps: 12
   sampleRateHz: 10
-  arrivalRadiusM: 5
   unitKind: 1
   altitudeReference: 2
   warningStartSec: 0

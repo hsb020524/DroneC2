@@ -78,3 +78,7 @@ Thumbs.db
 # Optional dev tool (embedded package, see README); never commit
 /[Pp]ackages/com.coplaydev.unity-mcp/
 /[Pp]ackages/com.coplaydev.unity-mcp.meta
+
+# Python bytecode (tools/ scripts import each other)
+__pycache__/
+*.pyc
