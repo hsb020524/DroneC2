@@ -143,7 +143,7 @@ Play 모드의 Game 화면을 PNG 프레임으로 저장하고 GIF로 조립한�
 3. `Temp/GifFrames/_done.txt`가 생길 때까지 기다린다. (`Temp/`는 Git 무시 대상) 프레임은 `Temp/GifFrames/frame_NNNN.png`로 저장된다.
 4. Play를 종료하고 GIF를 만든다.
    `python -I tools/make_gif.py Temp/GifFrames docs/images/stageN-이름.gif --fps 10 --width 640 --max-mb 10 --pillow-path <임시폴더>`
-5. 중간 프레임 몇 장을 직접 확인한 뒤(원하는 장면이 들어갔는지) `Temp/GifFrames/`와 Pillow 임시 폴더를 삭제한다.
+5. `make_gif.py`는 UI 상태 색(초록·노랑·빨강)을 팔레트에 고정 배정한다(작은 글자 색이 256색 양자화에서 회색으로 사라지는 것을 막음, `--keep-color`로 변경). 만든 GIF에서 상태 글자 색이 살아 있는지 확인한다. 중간 프레임 몇 장을 직접 확인한 뒤(원하는 장면이 들어갔는지) `Temp/GifFrames/`와 Pillow 임시 폴더를 삭제한다.
 6. GIF 크기가 10MB 이하인지 확인하고 `docs/devlog.md`에 추가한다.
 
 주의: Play 모드에서 스크립트를 수정하면 도메인 리로드로 녹화가 끊긴다. 에디터 Run In Background는 이미 켜져 있다.

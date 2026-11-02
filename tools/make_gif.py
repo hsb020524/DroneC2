@@ -9,11 +9,18 @@ Pillow는 저장소에 포함하지 않는다. 임시 폴더에 설치해서 --p
     pip install Pillow --target <임시폴더>
 
 용량이 --max-mb를 넘으면 프레임 수 -> 해상도 -> 색상 수 순으로 줄여 한도 안에 맞춘다.
+
+색 보존: GIF는 전역 256색 팔레트를 쓰는데, 어두운 지형 화면에서는 면적이 작은 UI 강조색(상태 글자의 초록 등)이
+팔레트에서 빠져 회색으로 보인다. 그래서 UI 상태 색(Assets/UI/ControlPanel.uss의 status-normal/warning/lost)을
+팔레트에 고정 배정한다. 다른 색을 지키려면 --keep-color R,G,B를 여러 번 주고, 끄려면 --no-keep-colors를 준다.
 """
 import argparse
 import glob
 import os
 import sys
+
+# Assets/UI/ControlPanel.uss의 상태 색: 정상(초록), 경고(노랑), 두절(빨강)
+DEFAULT_KEEP_COLORS = [(64, 230, 89), (255, 204, 26), (240, 70, 70)]
 
 
 def parse_args():
@@ -24,7 +31,24 @@ def parse_args():
     p.add_argument("--width", type=int, default=640, help="시작 가로 해상도 (기본 640, 원본이 작으면 유지)")
     p.add_argument("--max-mb", type=float, default=10.0, help="최대 파일 크기 MB (기본 10)")
     p.add_argument("--pillow-path", default=None, help="Pillow가 설치된 폴더 (pip install --target 위치)")
+    p.add_argument("--keep-color", action="append", metavar="R,G,B",
+                   help="팔레트에 고정 배정할 색(여러 번 가능). 기본: UI 상태 색 3개")
+    p.add_argument("--no-keep-colors", action="store_true", help="색 고정 배정을 끈다")
     return p.parse_args()
+
+
+def parse_keep_colors(args):
+    if args.no_keep_colors:
+        return []
+    if not args.keep_color:
+        return list(DEFAULT_KEEP_COLORS)
+    colors = []
+    for text in args.keep_color:
+        parts = [int(v) for v in text.split(",")]
+        if len(parts) != 3 or any(v < 0 or v > 255 for v in parts):
+            sys.exit(f"--keep-color는 R,G,B(0-255) 형식이어야 합니다: {text}")
+        colors.append(tuple(parts))
+    return colors
 
 
 def load_pillow(pillow_path):
@@ -39,7 +63,7 @@ def load_pillow(pillow_path):
     return PIL.Image
 
 
-def build(frames, width, colors, keep, fps, out_path, Image):
+def build(frames, width, colors, keep, fps, out_path, Image, keep_colors=()):
     selected = frames[::keep]
     resized = []
     for im in selected:
@@ -54,7 +78,15 @@ def build(frames, width, colors, keep, fps, out_path, Image):
     sheet = Image.new("RGB", (samples[0].width, samples[0].height * len(samples)))
     for i, s in enumerate(samples):
         sheet.paste(s, (0, i * samples[0].height))
-    palette_img = sheet.quantize(colors=colors, method=Image.MEDIANCUT)
+    keep_colors = list(keep_colors)[:max(0, colors - 1)]
+    base = sheet.quantize(colors=colors - len(keep_colors), method=Image.MEDIANCUT)
+    flat = base.getpalette()
+    base_count = len(flat) // 3
+    base_entries = [tuple(flat[i * 3:i * 3 + 3]) for i in range(min(base_count, colors - len(keep_colors)))]
+    entries = base_entries + keep_colors  # 고정 색은 정확히 그 값으로 팔레트에 들어간다
+    entries += [entries[-1]] * (256 - len(entries))
+    palette_img = Image.new("P", (1, 1))
+    palette_img.putpalette([c for e in entries for c in e])
 
     dither = getattr(getattr(Image, "Dither", Image), "NONE")
     paletted = [im.quantize(palette=palette_img, dither=dither) for im in resized]
@@ -78,6 +110,7 @@ def main():
         sys.exit(f"프레임을 찾을 수 없습니다: {args.frames_dir}/frame_*.png")
 
     frames = [Image.open(p).convert("RGB") for p in paths]
+    keep_colors = parse_keep_colors(args)
     limit = int(args.max_mb * 1024 * 1024)
     os.makedirs(os.path.dirname(os.path.abspath(args.out_gif)), exist_ok=True)
 
@@ -92,7 +125,7 @@ def main():
     ]
 
     for keep, width, colors in levels:
-        count, size = build(frames, width, colors, keep, args.fps, args.out_gif, Image)
+        count, size = build(frames, width, colors, keep, args.fps, args.out_gif, Image, keep_colors)
         file_size = os.path.getsize(args.out_gif)
         print(f"시도: 프레임 1/{keep}, 가로 {width}px, {colors}색 -> {file_size / 1024 / 1024:.2f}MB")
         if file_size <= limit:
