@@ -4,12 +4,12 @@
 
 ![전차 TNK-01이 OpenStreetMap 실제 도로를 따라 달리는 모습과 관제 UI](docs/images/stage6-osm-roads.gif)
 
-*약 12초. 전차가 OpenStreetMap의 실제 포장도로를 따라 달립니다(도로 중심선에서 평균 0.3–0.6m, 최대 1.5m). ArduPilot SITL 드론을 MAVLink로 받아 움직이는 장면은 [SITL 연동 GIF](docs/images/stage5-mavlink-sitl.gif)에서 볼 수 있습니다.*
+*약 12초. 전차가 OpenStreetMap의 실제 포장도로를 따라 달립니다(도로 중심선에서 평균 0.3–0.6m, 최대 1.5m). ArduPilot SITL 드론을 MAVLink로 받아 움직이는 장면은 [드론 SITL 연동 GIF](docs/images/stage5-mavlink-sitl.gif)와 [전차 Rover SITL 자율 주행 GIF](docs/images/stage7-rover-sitl.gif)에서 볼 수 있습니다.*
 
 ## 주요 기능
 
 - **실제 지형 위 다중 유닛:** Cesium World Terrain 위에서 드론 3기·전차 2기를 동시에 표시하고 경로선을 그립니다.
-- **산악 지형에 맞춘 고도 처리:** 드론은 이륙 지점(홈) 기준 상대고도에 홈 지형 높이를 더해 놓고, 전차는 지면에 밀착시킵니다. 지형 높이는 격자 캐시와 보간으로 조회합니다.
+- **산악 지형에 맞춘 고도 처리:** 드론은 이륙 지점(홈) 기준 상대고도에 홈 지형 높이를 더한 높이에 배치하고, 전차는 지면에 밀착시킵니다. 지형 높이는 격자 캐시와 보간으로 조회합니다.
 - **관제 UI:** 유닛 목록, 위치·고도·속도·방위 상세 패널, 정상/경고/두절 상태를 보여 줍니다. 두절은 수신 측이 2초 무수신으로 판정합니다.
 - **카메라 패널:** 유닛마다 가상 카메라가 있고, 선택한 유닛과 고정한 유닛의 영상을 동시에 볼 수 있습니다.
 - **데이터 소스 전환:** 가상 GPS와 MAVLink(ArduPilot SITL, 드론·전차 모두 확인) 사이를 설정으로 바꿉니다. Play 중에 바꾸면 이전 소스의 유닛·표시를 모두 비웁니다.
@@ -69,7 +69,7 @@ Claude Code와 함께 개발했고, 설계 결정과 검증은 직접 했습니�
 
 ## 단계별 기록
 
-1–6단계 결과와 GIF는 [docs/stages.md](docs/stages.md), 구현·검증·겪은 문제는 [docs/devlog.md](docs/devlog.md)에 있습니다.
+1–7단계 결과와 GIF는 [docs/stages.md](docs/stages.md), 구현·검증·겪은 문제는 [docs/devlog.md](docs/devlog.md)에 있습니다.
 
 ## 데이터 출처와 라이선스
 
