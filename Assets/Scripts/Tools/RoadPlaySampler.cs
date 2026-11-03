@@ -19,7 +19,7 @@ namespace DroneC2.Tools
     {
         static readonly string[] UnitIds = { "TNK-01", "TNK-02", "UAV-01", "UAV-02", "UAV-03" };
 
-        readonly StringBuilder csv = new StringBuilder("unit,timeSec,latitude,longitude,worldX,worldY,worldZ\n");
+        readonly StringBuilder csv = new StringBuilder("unit,timeSec,latitude,longitude,worldX,worldY,worldZ,viewYawDeg,reportedHeadingDeg,reportedSpeedMps\n");
         readonly Dictionary<string, int> counts = new Dictionary<string, int>();
         string outPath;
         float interval;
@@ -75,6 +75,15 @@ namespace DroneC2.Tools
                     continue;
 
                 Vector3 p = view.position;
+                double reportedHeading = double.NaN, reportedSpeed = double.NaN;
+                foreach (UnitState us in registry.Store.Units)
+                {
+                    if (us.Id != id)
+                        continue;
+                    reportedHeading = us.HeadingDeg;
+                    reportedSpeed = us.SpeedMps;
+                    break;
+                }
                 double3 ecef = georeference.TransformUnityPositionToEarthCenteredEarthFixed(new double3(p.x, p.y, p.z));
                 double3 llh = CesiumWgs84Ellipsoid.EarthCenteredEarthFixedToLongitudeLatitudeHeight(ecef);
                 csv.Append(id).Append(',')
@@ -83,7 +92,10 @@ namespace DroneC2.Tools
                     .Append(llh.x.ToString("R", CultureInfo.InvariantCulture)).Append(',')
                     .Append(p.x.ToString("F3", CultureInfo.InvariantCulture)).Append(',')
                     .Append(p.y.ToString("F3", CultureInfo.InvariantCulture)).Append(',')
-                    .Append(p.z.ToString("F3", CultureInfo.InvariantCulture)).Append('\n');
+                    .Append(p.z.ToString("F3", CultureInfo.InvariantCulture)).Append(',')
+                    .Append(view.eulerAngles.y.ToString("F2", CultureInfo.InvariantCulture)).Append(',')
+                    .Append(reportedHeading.ToString("F2", CultureInfo.InvariantCulture)).Append(',')
+                    .Append(reportedSpeed.ToString("F2", CultureInfo.InvariantCulture)).Append('\n');
                 counts[id] = counts.TryGetValue(id, out int n) ? n + 1 : 1;
             }
 

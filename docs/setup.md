@@ -71,6 +71,16 @@ C:\UnityProjects\DroneC2-tools\venv\Scripts\python.exe tools/mavlink_emitter.py 
 2. CONFIG → Full Parameter List에서 `SERIAL1_PROTOCOL`=2, `MAV2_POSITION`=4를 씁니다. 4.7에서는 스트림 설정 이름이 `SRn_*`가 아니라 `MAVn_*`이고 번호가 1부터라 `MAV2`가 SERIAL1입니다. **이 설정은 부팅할 때 적용되므로 쓴 뒤 SITL을 재시작해야 합니다.** 재시작 전에는 HEARTBEAT만 와서 유닛이 나타나지 않습니다.
 3. Unity에서 모드를 `Mavlink`로 바꾸고 Play하면 UAV-01(sysid 1)이 나타납니다. Guided → Arm → Takeoff, "이곳으로 비행"으로 움직일 수 있습니다.
 
+### 전차(Rover) SITL과 미션 주행 (선택)
+
+7단계에서 ArduRover 4.7.2로 확인했습니다. 드론 SITL과 동시에 켜지 않고 1기만 썼습니다.
+
+1. SIMULATION 탭에서 **탐사선**을 선택하면 Mission Planner가 ArduRover를 내려받아 `문서\Mission Planner\sitl\ArduRover.exe`에 둡니다(처음 한 번). 서명이 없으니 SHA-256을 기록해 두세요.
+2. **Extra command line**에 `--home=35.5583931,-83.4936664,1900,0 --serial1=udpclient:127.0.0.1:14560 --sysid 4`를 넣습니다. sysid 4는 테이블의 TNK-01이고, 홈은 TNK-01 도로 시작점입니다. `--wipe`는 쓰지 않습니다(다음 단계 설정이 지워짐).
+3. 드론과 같이 `SERIAL1_PROTOCOL`=2, `MAV2_POSITION`=4를 쓰고 **SITL을 재시작**합니다.
+4. 미션 파일을 만듭니다: `python -I tools/scenario_to_waypoints.py --unit TNK-01 --out tools/missions/tnk-01.waypoints`. 속도는 파일에 없으므로 `CRUISE_SPEED`·`WP_SPEED`(측정은 5)와 `WP_RADIUS`(기본 3)로 정합니다.
+5. PLAN 화면에서 Load WP File → Write WPs(고도 0 경고는 무시) 후, Unity를 MAVLink 모드로 Play하고 모드를 **Auto**로 바꿔 Arm하면 도로를 따라 주행합니다.
+
 ### Mission Planner 설치와 제거
 
 실제 시뮬레이터(ArduPilot SITL) 연동을 확인하려면 [Mission Planner](https://ardupilot.org/planner/docs/mission-planner-installation.html)를 씁니다. 5단계 개발에서는 1.3.83을 사용했습니다. 에미터만으로도 MAVLink 모드는 확인할 수 있어 필수가 아닙니다.

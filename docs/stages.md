@@ -48,3 +48,12 @@ ArduPilot SITL(Mission Planner)이 보내는 MAVLink v1·v2 텔레메트리를 U
 ![6단계 결과 GIF: TNK-01이 포장도로를 따라 달리는 약 12초 장면](images/stage6-osm-roads.gif)
 
 ![6단계 결과 스크린샷](images/stage6-osm-roads.png)
+
+## 7단계 — 전차(Rover) SITL 연동
+
+ArduRover SITL 1기(sysid 4)가 보내는 MAVLink를 받아 TNK-01을 전차로 인식하고 도로를 따라 움직입니다. TNK-01의 도로 경로를 Mission Planner 미션 파일로 바꿔(`tools/scenario_to_waypoints.py`) Auto 모드로 5 m/s 한 바퀴를 주행시켰고, 도로 중심선에서 평균 0.32m, 최대 1.9m 안에 머물렀습니다. Unity 수신·표시 코드는 고치지 않았습니다.
+
+![7단계 결과 GIF: ArduRover SITL 전차가 도로를 따라 달리는 15초 장면](images/stage7-rover-sitl.gif)
+
+![7단계 결과 스크린샷](images/stage7-rover-sitl.png)
+

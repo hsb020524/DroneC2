@@ -82,6 +82,32 @@ def report_deviation(results, rate_hz):
             sum(1 for d in dev if d > 1.0), sum(1 for d in dev if d > 3.0)))
 
 
+def report_heading(items, min_move_m=1.0):
+    """보고된 방위·뷰 방향을 실제 이동 방향(월드 좌표)과 비교한다. 열이 없으면 건너뛴다.
+
+    이동 방향은 min_move_m 이상 움직인 구간만 쓴다. 월드 X=동쪽, Z=북쪽이면 방위=atan2(dx, dz).
+    """
+    if not items or "reportedHeadingDeg" not in items[0]:
+        return
+    rep, view = [], []
+    ref = items[0]
+    for r in items[1:]:
+        dx = float(r["worldX"]) - float(ref["worldX"])
+        dz = float(r["worldZ"]) - float(ref["worldZ"])
+        if math.hypot(dx, dz) < min_move_m:
+            continue
+        move = (math.degrees(math.atan2(dx, dz)) + 360.0) % 360.0
+        for name, out in (("reportedHeadingDeg", rep), ("viewYawDeg", view)):
+            v = float(r[name])
+            if not math.isnan(v):
+                out.append(abs((v - move + 180.0) % 360.0 - 180.0))
+        ref = r
+    for label, d in (("보고된 방위", rep), ("뷰 방향", view)):
+        if d:
+            print("  방위 %s vs 이동 방향: 구간 %d개 | 평균 차이 %.1f°, 95%% %.1f°, 최대 %.1f°" % (
+                label, len(d), sum(d) / len(d), percentile(d, 0.95), max(d)))
+
+
 def report_positions(positions_path, poly, tank_ids=("TNK-01", "TNK-02")):
     """RoadProbe.StartPlayMeasurement가 기록한 실제 파이프라인 위치(CSV)의 도로 이탈 거리."""
     rows = {}
@@ -99,6 +125,7 @@ def report_positions(positions_path, poly, tank_ids=("TNK-01", "TNK-02")):
         print("%s: 샘플 %d개(%.0f초) | 평균 %.2f m, 95%% %.2f m, 최대 %.2f m | 1m 초과 %d개, 3m 초과 %d개, 5m 초과 %d개" % (
             unit_id, len(dev), span, sum(dev) / len(dev), percentile(dev, 0.95), max(dev),
             sum(1 for d in dev if d > 1.0), sum(1 for d in dev if d > 3.0), sum(1 for d in dev if d > 5.0)))
+        report_heading(items)
     others = sorted(set(rows) - set(tank_ids))
     if others:
         print("그 밖에 기록된 유닛(도로 비교 대상 아님): " + ", ".join("%s %d개" % (u, len(rows[u])) for u in others))

@@ -15,7 +15,8 @@ DroneC2는 포트폴리오용 Unity 프로젝트로, 드론·전차의 GPS 위�
 
 > 단계가 끝날 때마다 이 섹션을 갱신한다.
 
-- 현재 단계: 6단계(① 소스 전환 시 초기화, ② 전차 경로를 OSM 실제 도로로) 구현·검증·문서 정리 완료. `main`(`489703f`)과 `stage-6` 태그 푸시 완료(2026-11-03, 사용자가 GitHub에서 README GIF·ODbL 섹션·devlog 확인). 나머지 후보(③~⑦)는 7단계 이후 후보로 남았다(아래 "후보 목록"). 다음 할 일은 재개 지점 6번
+- 7단계(전차 Rover SITL, 2026-11-03~04, 구현·측정·문서 완료, **푸시·`stage-7` 태그는 사용자 확인 전**): ArduRover SITL 4.7.2 1기를 `--home=35.5583931,-83.4936664,1900,0 --serial1=udpclient:127.0.0.1:14560 --sysid 4` + `SERIAL1_PROTOCOL`=2·`MAV2_POSITION`=4(재시작)로 연결했다. MAV_TYPE 10이 Tank로 인식되고 경고·손상 0, 5.00 m/s, 지면 밀착(샘플러 기준), SITL 종료 후 2.002초에 두절. `tools/scenario_to_waypoints.py`(+테스트 5건)로 TNK-01 경로를 `tools/missions/tnk-01.waypoints`로 만들어 Auto 주행: 속도 5 m/s·`WP_RADIUS` 3에서 한 바퀴(1,995m) 도로 이탈 평균 0.32/95% 0.96/최대 1.90m, 방위 차이 평균 0.9°. Unity 수신·표시 코드는 수정 없음(`RoadPlaySampler`에 방위 열만 추가). ArduRover.exe는 `문서\Mission Planner\sitl\`에 Mission Planner가 내려받음(SHA-256·미확인 사항은 devlog 7단계). 후보 ⑥·⑧ 완료. 미확인: 속도를 올린 측정, 드론+전차 동시 SITL, 방위 최대 차이의 원인. 루트에 SITL을 `--help`로 실행하다 생긴 `eeprom.bin`이 남아 있으면 사용자 확인 후 삭제(커밋 금지).
+- 이전 단계: 6단계(① 소스 전환 시 초기화, ② 전차 경로를 OSM 실제 도로로) 구현·검증·문서 정리 완료. `main`(`489703f`)과 `stage-6` 태그 푸시 완료(2026-11-03, 사용자가 GitHub에서 README GIF·ODbL 섹션·devlog 확인). 나머지 후보(③~⑦)는 7단계 이후 후보로 남았다(아래 "후보 목록"). 다음 할 일은 재개 지점 6번
 - 완료: 1단계 전체(평면 위 가짜 GPS 드론, 경로선, 추적 카메라)와 2단계 구현·검증.
   - 2단계: `Stage2Cesium` 씬(Cesium World Terrain + Bing Maps Aerial)에서 `CesiumGeoreferenceConverter`(`ICoordinateConverter`)로 위경도를 월드 좌표로 변환한다. `ITerrainHeightSampler` + `TerrainHeightGrid`(격자 캐시·쌍선형 보간) + `AltitudeResolver`로 지표 기준 고도(`AltitudeMode`: Absolute/AboveGround/ClampToGround)를 지원한다. 드론은 `AboveGround` 80m로 경로를 이동하며 지표 위 높이가 77~81m로 유지됨을 실측했다.
   - 기준점: 35.563°N, 83.499°W(클링맨스 돔 부근), 지오레퍼런스 높이 2000m(타원체고). 경로는 기준점 주변 약 1.2km 사각형(코너까지 약 850m), 속도 25m/s.
