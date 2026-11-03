@@ -73,6 +73,7 @@ Claude Code와 함께 개발했고, 설계 결정과 검증은 직접 했습니�
 
 ## 데이터 출처와 라이선스
 
+- **코드 라이선스:** [MIT](LICENSE)는 이 저장소의 코드에만 적용됩니다. OSM 파생 경로 파일은 ODbL, Cesium 지형·이미지 등은 각자의 약관을 따릅니다.
 - **지형·영상:** Cesium World Terrain과 Bing Maps Aerial을 Cesium ion으로 받습니다. 화면의 크레딧은 이용 약관상 유지해야 합니다.
 - **전차 경로(OpenStreetMap):** 전차(TNK-01·02) 경로는 OpenStreetMap의 도로 `Kuwohi Access Road`에서 만든 파생 데이터입니다. **© OpenStreetMap contributors**, [Open Database License(ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/)으로 제공됩니다. 저작권·라이선스 안내는 <https://www.openstreetmap.org/copyright>를 참고하세요.
   - 경로 파일 `Assets/Scenarios/osm-roads-tnk.json`은 OSM 데이터에서 파생한 데이터베이스라서 ODbL(출처 표기, 같은 조건으로 공유)을 따릅니다. 프로젝트의 나머지 코드·시나리오와 섞이지 않도록 별도 파일로 분리했고, 파일 안에도 출처 문구(`attribution`)와 OSM 데이터 기준 시각이 들어 있습니다.

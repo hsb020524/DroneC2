@@ -92,3 +92,6 @@ __pycache__/
 /mav.tlog.raw
 /*.tlog
 /*.rlog
+
+# Personal Claude Code notes (not published)
+/CLAUDE.local.md
