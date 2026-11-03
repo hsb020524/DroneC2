@@ -82,3 +82,13 @@ Thumbs.db
 # Python bytecode (tools/ scripts import each other)
 __pycache__/
 *.pyc
+
+# ArduPilot SITL working files (written to the current directory if a SITL binary is run from the repo)
+/eeprom.bin
+/logs/
+/terrain/
+/mav.parm
+/mav.tlog
+/mav.tlog.raw
+/*.tlog
+/*.rlog
